@@ -131,7 +131,15 @@
     var KEY_NAME = 'strmcreator_apikey';
     var state = { libraries: [], crumbs: [], mode: 'movie' };
 
-    var $ = function (id) { return document.getElementById(id); };
+    function authHeaders() {
+        var key = localStorage.getItem(KEY_NAME) || '';
+        return {
+            // Formato atual (Jellyfin 10.11+/12). O antigo X-Emby-Token
+            // nao e mais aceito para API keys.
+            'Authorization': 'MediaBrowser Token="' + key + '"',
+            'X-Emby-Token': key // fallback para servidores antigos
+        };
+    }
 
     function f(obj, name) {
         if (!obj) return undefined;
@@ -147,7 +155,7 @@
     function api(method, path, body) {
         var opts = {
             method: method,
-            headers: { 'X-Emby-Token': localStorage.getItem(KEY_NAME) || '' }
+            headers: authHeaders()
         };
         if (body !== undefined) {
             opts.headers['Content-Type'] = 'application/json';
@@ -350,7 +358,7 @@
 
     function scan() {
         setStatus('Escaneando bibliotecas...', 'busy');
-        fetch('/Library/Refresh', { method: 'POST', headers: { 'X-Emby-Token': localStorage.getItem(KEY_NAME) || '' } })
+        fetch('/Library/Refresh', { method: 'POST', headers: authHeaders() })
             .then(function (res) {
                 if (!res.ok) throw new Error('HTTP ' + res.status);
                 setStatus('✔ Scan disparado! O item deve aparecer em instantes.', 'ok');
