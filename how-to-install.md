@@ -51,24 +51,71 @@ dotnet build -c Release -p:JellyfinTarget=jf12   # Jellyfin 12
 dotnet build -c Release -p:JellyfinTarget=jf10   # Jellyfin 10.11
 ```
 
-A DLL fica em `bin/Release/net10.0/` (jf12) ou `bin/Release/net9.0/` (jf10).
-
 > Se você compilou, a DLL fica em `bin/Release/net10.0/` (jf12) ou `bin/Release/net9.0/` (jf10).
 
 ---
 
-## Passo 3 — Copie a DLL pra pasta de plugins
+## Passo 3 — Crie a pasta do plugin e copie a DLL
 
-Copie **apenas o arquivo `Jellyfin.Plugin.StrmCreator.dll`** para a pasta de plugins do Jellyfin, dentro de uma subpasta chamada `StrmCreator`:
+⚠️ **Presta atenção nesse passo!** No Jellyfin, cada plugin fica dentro de **uma pasta própria** dentro da pasta `plugins`. Ou seja: você não joga a DLL solta em `plugins/` — precisa **criar uma pasta** pra ela primeiro.
 
-| Instalação | Caminho |
+Se você já instalou plugin pelo catálogo, já viu isso: eles ficam tipo `plugins/AniDB_13.0.0.0/`, `plugins/OpenSubtitles_21.0.0.0/` etc. No modo manual o nome da pasta é livre — pode ser `StrmCreator` mesmo:
+
+```
+plugins/
+├── AniDB_13.0.0.0/
+│   └── Jellyfin.Plugin.AniDB.dll
+├── OpenSubtitles_21.0.0.0/
+│   └── ...
+└── StrmCreator/                  ← CRIE ESSA PASTA
+    └── Jellyfin.Plugin.StrmCreator-jfXX.dll   ← e coloque a DLL aqui dentro
+```
+
+### Onde fica a pasta `plugins`?
+
+| Instalação | Caminho da pasta `plugins` |
 |---|---|
-| **Windows** (instalador normal) | `C:\Users\SEU_USUARIO\AppData\Local\jellyfin\plugins\StrmCreator\` |
-| **Windows** (serviço/tray) | `C:\ProgramData\Jellyfin\Server\plugins\StrmCreator\` |
-| **Linux** (apt/dnf) | `/var/lib/jellyfin/plugins/StrmCreator/` |
-| **Docker** | `/config/plugins/StrmCreator/` (dentro do volume do config) |
+| **Windows** (instalador normal) | `C:\Users\SEU_USUARIO\AppData\Local\jellyfin\plugins\` |
+| **Windows** (serviço/tray) | `C:\ProgramData\Jellyfin\Server\plugins\` |
+| **Linux** (apt/dnf) | `/var/lib/jellyfin/plugins/` |
+| **Docker** | `/config/plugins/` (dentro do volume do config) |
 
 Dica rápida no Windows: aperte `Win + R`, cole o caminho e Enter.
+
+### Como fazer (Linux / Docker)
+
+```bash
+# entre na pasta de plugins (exemplo real de um servidor Linux)
+cd /var/lib/jellyfin/plugins
+
+# crie a pasta do plugin
+mkdir -p StrmCreator
+
+# mova a DLL baixada pra dentro dela
+mv /caminho/onde/baixou/Jellyfin.Plugin.StrmCreator-jf12.dll StrmCreator/
+
+# confira o resultado
+ls StrmCreator/
+# Jellyfin.Plugin.StrmCreator-jf12.dll
+```
+
+No **Docker** é igual, só muda o caminho (dentro do container ou no volume do host):
+
+```bash
+docker exec -it jellyfin mkdir -p /config/plugins/StrmCreator
+docker cp Jellyfin.Plugin.StrmCreator-jf12.dll jellyfin:/config/plugins/StrmCreator/
+```
+
+### Como fazer (Windows)
+
+1. Abra a pasta `plugins` (veja a tabela acima)
+2. Crie uma pasta nova lá dentro chamada **`StrmCreator`** (botão direito → Nova pasta)
+3. Copie a DLL pra dentro dessa pasta
+4. O resultado final deve ficar assim:
+
+```
+...\jellyfin\plugins\StrmCreator\Jellyfin.Plugin.StrmCreator-jf12.dll
+```
 
 **Docker (docker-compose):** se o compose já mapeia o config (ex.: `./jellyfin/config:/config`), a pasta fica em `./jellyfin/config/plugins/StrmCreator/` no seu host. Se não mapeia, adicione ao compose:
 
@@ -77,7 +124,9 @@ volumes:
   - ./jellyfin/config:/config
 ```
 
-> ⚠️ Importante: dentro de `plugins\StrmCreator\` deve ficar **só a DLL do plugin**. Se aparecerem outros arquivos (ex.: `Jellyfin.Model.dll`), apague — são da versão errada do build e impedem o plugin de carregar.
+> ⚠️ Importante: dentro da pasta `StrmCreator/` deve ficar **só a DLL do plugin**. Se aparecerem outros arquivos (ex.: `Jellyfin.Model.dll`), apague — são da versão errada do build e impedem o plugin de carregar.
+>
+> ⚠️ E atenção ao nome do arquivo: `jf10` = Jellyfin 10.11.x, `jf12` = Jellyfin 12.x (Passo 1). Se usar a errada, o plugin aparece como "NotSupported".
 
 ---
 
