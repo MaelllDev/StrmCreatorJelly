@@ -1,3 +1,9 @@
+/*
+ * Strm Creator - plugin Jellyfin
+ * Copyright 2026 MaelllDev
+ * Repositorio oficial: https://github.com/MaelllDev/StrmCreatorJelly
+ * Licenciado sob a Apache License 2.0 (ver arquivo LICENSE / NOTICE).
+ */
 (function () {
     'use strict';
 

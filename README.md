@@ -97,4 +97,9 @@ Todos exigem permissão de **administrador** (política `RequiresElevation`), ex
 
 ## Licença
 
-[BSD 3-Clause](LICENSE) — uso livre, desde que os créditos do autor original (MaelllDev) sejam mantidos.
+[Apache 2.0](LICENSE) + arquivo [NOTICE](NOTICE).
+
+- ✅ Pode usar, estudar, **modificar e melhorar** o código
+- ✅ Pode redistribuir (inclusive em forks)
+- ⛔ **Obrigatório**: manter os créditos do autor original (MaelllDev) **e o link do repositório oficial** — https://github.com/MaelllDev/StrmCreatorJelly — em qualquer cópia ou trabalho derivado (o arquivo `NOTICE` cobre isso; não o remova)
+- Modificações devem indicar que os arquivos foram alterados (cláusula 4b da licença)
