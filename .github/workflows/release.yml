@@ -1,6 +1,6 @@
 name: Release
 
-# Dispara automaticamente quando uma tag nova (ex.: v0.2.4) é enviada.
+# Dispara automaticamente quando uma tag nova (ex.: v0.2.5) é enviada.
 on:
   push:
     tags:
@@ -30,70 +30,82 @@ jobs:
       - name: Build jf12 (Jellyfin 12)
         run: dotnet build -c Release -p:JellyfinTarget=jf12 -v q
 
-      # Organiza os artifacts: uma pasta por linha com DLL + icone,
-      # igual ao layout dos plugins instalados pelo catalogo.
+      # Organiza artifacts:
+      # - pasta release/StrmCreator-<v>/ com tudo (pra referencia)
+      # - ZIP POR LINHA (jf10/jf12) contendo dll + icon.png na raiz: e esse
+      #   zip que o Jellyfin baixa e extrai pra plugins/StrmCreator_<v>/
+      #   quando instalado pelo catalogo (formato atual do manifest).
       - name: Organizar artifacts
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
+          if [[ "${VERSION}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then VERSION="${VERSION}.0"; fi
+          echo "VERSION=${VERSION}" >> "${GITHUB_ENV}"
           mkdir -p "release/StrmCreator-${VERSION}/jf10" "release/StrmCreator-${VERSION}/jf12"
-          cp bin/Release/net9.0/Jellyfin.Plugin.StrmCreator.dll  "release/StrmCreator-${VERSION}/jf10/Jellyfin.Plugin.StrmCreator-jf10.dll"
-          cp bin/Release/net10.0/Jellyfin.Plugin.StrmCreator.dll "release/StrmCreator-${VERSION}/jf12/Jellyfin.Plugin.StrmCreator-jf12.dll"
+          cp bin/Release/net9.0/Jellyfin.Plugin.StrmCreator.dll  "release/StrmCreator-${VERSION}/jf10/Jellyfin.Plugin.StrmCreator.dll"
+          cp bin/Release/net10.0/Jellyfin.Plugin.StrmCreator.dll "release/StrmCreator-${VERSION}/jf12/Jellyfin.Plugin.StrmCreator.dll"
           cp plugins/icon.png "release/StrmCreator-${VERSION}/jf10/icon.png"
           cp plugins/icon.png "release/StrmCreator-${VERSION}/jf12/icon.png"
           cp LICENSE NOTICE README.md how-to-install.md "release/StrmCreator-${VERSION}/"
-          cd release && zip -r "../StrmCreator-${VERSION}.zip" "StrmCreator-${VERSION}"
+          # zips instalaveis pelo catalogo (conteudo na raiz do zip)
+          (cd "release/StrmCreator-${VERSION}/jf10" && zip -r "${GITHUB_WORKSPACE}/StrmCreator_${VERSION}_jf10.zip" .)
+          (cd "release/StrmCreator-${VERSION}/jf12" && zip -r "${GITHUB_WORKSPACE}/StrmCreator_${VERSION}_jf12.zip" .)
+          # zip completo (uso manual, com docs)
+          cd release && zip -r "${GITHUB_WORKSPACE}/StrmCreator-${VERSION}.zip" "StrmCreator-${VERSION}"
 
-      # Publica a release anexando os 3 arquivos (recria se já existir)
+      # Publica a release anexando os 5 arquivos (recria se já existir)
       - name: Publicar release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          VERSION="${GITHUB_REF_NAME#v}"
-          ZIP="StrmCreator-${VERSION}.zip"
-          JF10="release/StrmCreator-${VERSION}/jf10/Jellyfin.Plugin.StrmCreator-jf10.dll"
-          JF12="release/StrmCreator-${VERSION}/jf12/Jellyfin.Plugin.StrmCreator-jf12.dll"
+          VERSION="${VERSION}"
           gh release delete "${GITHUB_REF_NAME}" --yes --cleanup-tag || true
           gh release create "${GITHUB_REF_NAME}" \
             --title "Strm Creator ${GITHUB_REF_NAME}" \
             --generate-notes \
-            "${ZIP}" "${JF10}" "${JF12}"
+            "StrmCreator-${VERSION}.zip" \
+            "StrmCreator_${VERSION}_jf10.zip" \
+            "StrmCreator_${VERSION}_jf12.zip" \
+            "release/StrmCreator-${VERSION}/jf10/Jellyfin.Plugin.StrmCreator.dll" \
+            "release/StrmCreator-${VERSION}/jf12/Jellyfin.Plugin.StrmCreator.dll"
 
-      # Gera/atualiza o catalogo (manifest.json) no branch "catalog".
-      # E isso que faz o plugin aparecer no Catalogo do Painel, com foto,
-      # meta e atualizacao automatica - igual aos plugins oficiais.
+      # Gera/atualiza o catalogo (manifests) no branch "catalog".
+      # FORMATO ATUAL (validado contra o catalogo oficial e o do JavaScript
+      # Injector): raiz é ARRAY; binario vai em sourceUrl apontando para um
+      # ZIP; checksum é MD5 do zip; timestamp ISO8601.
       - name: Atualizar catalogo
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          VERSION="${GITHUB_REF_NAME#v}"
+          VERSION="${VERSION}"
           TAG="${GITHUB_REF_NAME}"
           BASE="https://github.com/MaelllDev/StrmCreatorJelly/releases/download/${TAG}"
-          DIR="release/StrmCreator-${VERSION}"
 
-          CHK10=$(sha256sum "${DIR}/jf10/Jellyfin.Plugin.StrmCreator-jf10.dll" | cut -d' ' -f1)
-          CHK12=$(sha256sum "${DIR}/jf12/Jellyfin.Plugin.StrmCreator-jf12.dll" | cut -d' ' -f1)
-          CHKZIP=$(sha256sum "StrmCreator-${VERSION}.zip" | cut -d' ' -f1)
+          MD5_10=$(md5sum "StrmCreator_${VERSION}_jf10.zip" | cut -d' ' -f1)
+          MD5_12=$(md5sum "StrmCreator_${VERSION}_jf12.zip" | cut -d' ' -f1)
+          TS=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 
-          # Gera o entry do manifest e salva o icone em /tmp ANTES de trocar
-          # de branch (a troca para o orphan apaga a arvore de arquivos).
+          # Gera o package entry e salva o icone em /tmp ANTES de trocar de
+          # branch (a troca para o orphan apaga a arvore de arquivos).
           jq -n \
             --arg version "${VERSION}" \
             --arg tag "${TAG}" \
-            --arg chk10 "${CHK10}" --arg chk12 "${CHK12}" --arg chkzip "${CHKZIP}" \
-            --arg url10 "${BASE}/Jellyfin.Plugin.StrmCreator-jf10.dll" \
-            --arg url12 "${BASE}/Jellyfin.Plugin.StrmCreator-jf12.dll" \
-            --arg urlzip "${BASE}/StrmCreator-${VERSION}.zip" \
-            '{name: "Strm Creator",
+            --arg md5_10 "${MD5_10}" --arg md5_12 "${MD5_12}" \
+            --arg url10 "${BASE}/StrmCreator_${VERSION}_jf10.zip" \
+            --arg url12 "${BASE}/StrmCreator_${VERSION}_jf12.zip" \
+            --arg ts "${TS}" \
+            '[{
               guid: "e1f2a3b4-c5d6-4e7f-8a9b-0c1d2e3f4a5b",
+              name: "Strm Creator",
               overview: "Cria arquivos .strm direto pela interface: escolha a biblioteca, navegue as pastas e cole o link de stream.",
               description: "Adiciona um botao na pagina de detalhes para criar arquivos .strm: escolha a biblioteca, navegue pelas pastas, crie uma pasta nova, nomeie o arquivo (modo serie com S01E01 e lote de episodios) e cole o link de stream. Codigo aberto (Apache 2.0) - fork deve manter creditos e link do repositorio oficial.",
               owner: "MaelllDev",
               category: "General",
               imageUrl: "https://raw.githubusercontent.com/MaelllDev/StrmCreatorJelly/main/plugins/icon.png",
               versions: [
-                {version: $version, changelog: ("Release " + $tag), targetAbi: "10.11.0.0", sourceUrl: ("https://github.com/MaelllDev/StrmCreatorJelly/tree/" + $tag), url: $url10, checksum: $chk10, timestamp: (now | todateiso8601)},
-                {version: $version, changelog: ("Release " + $tag), targetAbi: "12.0.0.0", sourceUrl: ("https://github.com/MaelllDev/StrmCreatorJelly/tree/" + $tag), url: $url12, checksum: $chk12, timestamp: (now | todateiso8601)}
-              ]}' > /tmp/entry.json
+                {version: $version, changelog: ("Release " + $tag), targetAbi: "10.11.0.0", sourceUrl: $url10, checksum: $md5_10, timestamp: $ts},
+                {version: $version, changelog: ("Release " + $tag), targetAbi: "12.0.0.0", sourceUrl: $url12, checksum: $md5_12, timestamp: $ts}
+              ]
+            }]' > /tmp/entry.json
           cat /tmp/entry.json
           cp plugins/icon.png /tmp/icon.png
 
@@ -108,8 +120,8 @@ jobs:
           fi
 
           cp /tmp/icon.png icon.png
-          jq '.versions = [.versions[] | select(.targetAbi != "12.0.0.0")]' /tmp/entry.json > manifest-10.11.json
-          jq '.versions = [.versions[] | select(.targetAbi != "10.11.0.0")]' /tmp/entry.json > manifest-12.json
+          jq 'map(.versions = [.versions[] | select(.targetAbi != "12.0.0.0")])' /tmp/entry.json > manifest-10.11.json
+          jq 'map(.versions = [.versions[] | select(.targetAbi != "10.11.0.0")])' /tmp/entry.json > manifest-12.json
           cp /tmp/entry.json manifest.json
           git add manifest.json manifest-12.json manifest-10.11.json icon.png
           git commit -m "Catalog: release ${TAG}"
