@@ -1,6 +1,6 @@
 name: Release
 
-# Dispara automaticamente quando uma tag nova (ex.: v0.2.5) é enviada.
+# Dispara automaticamente quando uma tag nova (ex.: v0.2.6) é enviada.
 on:
   push:
     tags:
@@ -30,11 +30,8 @@ jobs:
       - name: Build jf12 (Jellyfin 12)
         run: dotnet build -c Release -p:JellyfinTarget=jf12 -v q
 
-      # Organiza artifacts:
-      # - pasta release/StrmCreator-<v>/ com tudo (pra referencia)
-      # - ZIP POR LINHA (jf10/jf12) contendo dll + icon.png na raiz: e esse
-      #   zip que o Jellyfin baixa e extrai pra plugins/StrmCreator_<v>/
-      #   quando instalado pelo catalogo (formato atual do manifest).
+      # Organiza artifacts: zips por linha (dll + icon.png na raiz) que o
+      # Jellyfin baixa e extrai pra plugins/StrmCreator_<v>/, + zip completo.
       - name: Organizar artifacts
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
@@ -46,7 +43,7 @@ jobs:
           cp plugins/icon.png "release/StrmCreator-${VERSION}/jf10/icon.png"
           cp plugins/icon.png "release/StrmCreator-${VERSION}/jf12/icon.png"
           cp LICENSE NOTICE README.md how-to-install.md "release/StrmCreator-${VERSION}/"
-          # DLLs soltas com nomes distintos (a release nao aceita assets duplicados)
+          # DLLs soltas com nomes distintos (release nao aceita assets duplicados)
           cp "release/StrmCreator-${VERSION}/jf10/Jellyfin.Plugin.StrmCreator.dll" "StrmCreator_${VERSION}_jf10.dll"
           cp "release/StrmCreator-${VERSION}/jf12/Jellyfin.Plugin.StrmCreator.dll" "StrmCreator_${VERSION}_jf12.dll"
           # zips instalaveis pelo catalogo (conteudo na raiz do zip)
@@ -60,7 +57,6 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          VERSION="${VERSION}"
           gh release delete "${GITHUB_REF_NAME}" --yes --cleanup-tag || true
           gh release create "${GITHUB_REF_NAME}" \
             --title "Strm Creator ${GITHUB_REF_NAME}" \
@@ -72,10 +68,9 @@ jobs:
             "StrmCreator_${VERSION}_jf10.dll" \
             "StrmCreator_${VERSION}_jf12.dll"
 
-      # Gera/atualiza o catalogo (manifests) no branch "catalog".
-      # FORMATO ATUAL (validado contra o catalogo oficial e o do JavaScript
-      # Injector): raiz é ARRAY; binario vai em sourceUrl apontando para um
-      # ZIP; checksum é MD5 do zip; timestamp ISO8601.
+      # Gera/atualiza o catalogo no branch "catalog" ACUMULANDO o historico
+      # de versoes (o painel lista tudo que esta no array "versions").
+      # Formato atual: raiz ARRAY; binario em sourceUrl (zip); checksum MD5.
       - name: Atualizar catalogo
         env:
           GH_TOKEN: ${{ github.token }}
@@ -88,16 +83,49 @@ jobs:
           MD5_12=$(md5sum "StrmCreator_${VERSION}_jf12.zip" | cut -d' ' -f1)
           TS=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 
-          # Gera o package entry e salva o icone em /tmp ANTES de trocar de
-          # branch (a troca para o orphan apaga a arvore de arquivos).
+          # Changelog: primeiro paragrafo do commit da tag (ou fallback)
+          CHANGELOG="Release ${TAG}"
+          CHANGELOG="${CHANGELOG}$(git log -1 --format=%B "${TAG}" | sed '/^$/q' | tail -n +2 | sed 's/^/ /' | tr -d '\r')"
+          CHANGELOG=$(echo "${CHANGELOG}" | sed 's/  */ /g' | cut -c1-500)
+
           jq -n \
             --arg version "${VERSION}" \
             --arg tag "${TAG}" \
+            --arg changelog "${CHANGELOG}" \
             --arg md5_10 "${MD5_10}" --arg md5_12 "${MD5_12}" \
             --arg url10 "${BASE}/StrmCreator_${VERSION}_jf10.zip" \
             --arg url12 "${BASE}/StrmCreator_${VERSION}_jf12.zip" \
             --arg ts "${TS}" \
-            '[{
+            '{
+              version: $version,
+              changelog: $changelog,
+              versions: [
+                {version: $version, changelog: $changelog, targetAbi: "10.11.0.0", sourceUrl: $url10, checksum: $md5_10, timestamp: $ts},
+                {version: $version, changelog: $changelog, targetAbi: "12.0.0.0", sourceUrl: $url12, checksum: $md5_12, timestamp: $ts}
+              ]
+            }' > /tmp/new-versions.json
+          cp plugins/icon.png /tmp/icon.png
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          # Baixa o manifest atual (se existir) para ACUMULAR as versoes
+          BASE_MANIFEST="https://raw.githubusercontent.com/MaelllDev/StrmCreatorJelly/catalog/manifest.json"
+          curl -sL "${BASE_MANIFEST}" -o /tmp/current-manifest.json || true
+          if ! jq -e 'type == "array" and length > 0' /tmp/current-manifest.json >/dev/null 2>&1; then
+            echo '[]' > /tmp/current-manifest.json
+          fi
+
+          # Historico antigo por targetAbi (sem a versao atual, se repetida)
+          OLD_12=$(jq -c '[ .[0].versions[]? | select(.targetAbi == "12.0.0.0" and .version != "'"${VERSION}"'") ]' /tmp/current-manifest.json)
+          OLD_10=$(jq -c '[ .[0].versions[]? | select(.targetAbi == "10.11.0.0" and .version != "'"${VERSION}"'") ]' /tmp/current-manifest.json)
+
+          jq -n \
+            --argjson old12 "${OLD_12:-[]}" \
+            --argjson old10 "${OLD_10:-[]}" \
+            --slurpfile nv /tmp/new-versions.json \
+            --arg ts "${TS}" \
+            '{
               guid: "e1f2a3b4-c5d6-4e7f-8a9b-0c1d2e3f4a5b",
               name: "Strm Creator",
               overview: "Cria arquivos .strm direto pela interface: escolha a biblioteca, navegue as pastas e cole o link de stream.",
@@ -105,13 +133,16 @@ jobs:
               owner: "MaelllDev",
               category: "General",
               imageUrl: "https://raw.githubusercontent.com/MaelllDev/StrmCreatorJelly/main/plugins/icon.png",
-              versions: [
-                {version: $version, changelog: ("Release " + $tag), targetAbi: "10.11.0.0", sourceUrl: $url10, checksum: $md5_10, timestamp: $ts},
-                {version: $version, changelog: ("Release " + $tag), targetAbi: "12.0.0.0", sourceUrl: $url12, checksum: $md5_12, timestamp: $ts}
-              ]
-            }]' > /tmp/entry.json
-          cat /tmp/entry.json
-          cp plugins/icon.png /tmp/icon.png
+              versions: (
+                [$nv[0].versions[] | select(.targetAbi == "12.0.0.0")] + $old12 +
+                [$nv[0].versions[] | select(.targetAbi == "10.11.0.0")] + $old10
+              )
+            }' > /tmp/package.json
+
+          # Envolve em array e grava os tres manifests
+          jq '[ . ]' /tmp/package.json > /tmp/manifest.json
+          jq '[ .[0] | .versions = [.versions[] | select(.targetAbi != "12.0.0.0")] ]' /tmp/package.json > /tmp/manifest-10.11.json
+          jq '[ .[0] | .versions = [.versions[] | select(.targetAbi != "10.11.0.0")] ]' /tmp/package.json > /tmp/manifest-12.json
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -124,9 +155,9 @@ jobs:
           fi
 
           cp /tmp/icon.png icon.png
-          jq 'map(.versions = [.versions[] | select(.targetAbi != "12.0.0.0")])' /tmp/entry.json > manifest-10.11.json
-          jq 'map(.versions = [.versions[] | select(.targetAbi != "10.11.0.0")])' /tmp/entry.json > manifest-12.json
-          cp /tmp/entry.json manifest.json
+          cp /tmp/manifest.json manifest.json
+          cp /tmp/manifest-12.json manifest-12.json
+          cp /tmp/manifest-10.11.json manifest-10.11.json
           git add manifest.json manifest-12.json manifest-10.11.json icon.png
-          git commit -m "Catalog: release ${TAG}"
+          git commit -m "Catalog: release ${TAG} (histórico acumulado)"
           git push origin catalog

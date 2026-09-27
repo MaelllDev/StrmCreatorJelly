@@ -1,58 +1,85 @@
-<div class="page type-interior pluginConfigurationPage strmCreatorConfigPage" data-require="emby-input,emby-button,emby-checkbox">
-    <div class="content-primary">
-        <div class="verticalSection">
-            <h2 class="sectionTitle">Strm Creator</h2>
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Strm Creator</title>
+</head>
+<body>
+    <div id="StrmCreatorConfigPage" data-role="page" class="page type-interior pluginConfigurationPage" data-require="emby-input,emby-button,emby-checkbox">
+        <div data-role="content">
+            <div class="content-primary">
+                <form id="StrmCreatorConfigForm">
+                    <div class="verticalSection">
+                        <div class="sectionTitleContainer flex align-items-center">
+                            <h2 class="sectionTitle">Strm Creator</h2>
+                            <a is="emby-linkbutton" class="raised raised-mini emby-button" style="margin-left: 2em" target="_blank" href="https://github.com/MaelllDev/StrmCreatorJelly">
+                                <i class="md-icon button-icon button-icon-left secondaryText"></i>
+                                <span>Repositório</span>
+                            </a>
+                        </div>
+                        <p class="fieldDescription">
+                            Adiciona um botão "Adicionar .strm" na página de detalhes do Jellyfin.
+                        </p>
+                        <hr />
+                    </div>
+
+                    <div class="checkboxContainer checkboxContainer-withDescription">
+                        <label>
+                            <input is="emby-checkbox" type="checkbox" id="strmCreatorAdminOnly" />
+                            <span>Apenas administradores podem ver o botão</span>
+                        </label>
+                        <div class="fieldDescription">Quando marcado, o botão "Adicionar .strm" só aparece para usuários administradores.</div>
+                    </div>
+
+                    <div>
+                        <button is="emby-button" type="submit" class="raised button-submit block">
+                            <span>Salvar</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
-        <form class="strmCreatorConfigForm">
-            <div class="checkboxContainer checkboxContainer-withDescription">
-                <label>
-                    <input is="emby-checkbox" type="checkbox" id="strmCreatorAdminOnly" />
-                    <span>Apenas administradores podem ver o botão</span>
-                </label>
-                <div class="fieldDescription">Quando marcado, o botão "Adicionar .strm" só aparece para usuários administradores.</div>
-            </div>
-            <div>
-                <button is="emby-button" type="submit" class="raised button-submit block">
-                    <span>Salvar</span>
-                </button>
-            </div>
-        </form>
     </div>
-</div>
-<script type="text/javascript">
-    (function () {
-        'use strict';
+    <script type="text/javascript">
+        (function () {
+            'use strict';
 
-        var pluginId = 'e1f2a3b4-c5d6-4e7f-8a9b-0c1d2e3f4a5b';
+            var pluginId = 'e1f2a3b4-c5d6-4e7f-8a9b-0c1d2e3f4a5b';
 
-        function loadConfig(page) {
-            ApiClient.getPluginConfiguration(pluginId).then(function (config) {
-                page.querySelector('#strmCreatorAdminOnly').checked = config.AdminOnly;
-            });
-        }
-
-        function bindForm(page) {
-            var form = page.querySelector('.strmCreatorConfigForm');
-            if (!form || form.dataset.bound) return;
-            form.dataset.bound = '1';
-            form.addEventListener('submit', function (e) {
-                e.preventDefault();
+            function loadConfig(page) {
                 ApiClient.getPluginConfiguration(pluginId).then(function (config) {
-                    config.AdminOnly = page.querySelector('#strmCreatorAdminOnly').checked;
-                    ApiClient.updatePluginConfiguration(pluginId, config).then(Dashboard.processServerConfigurationUpdateResult);
+                    page.querySelector('#strmCreatorAdminOnly').checked = !!config.AdminOnly;
                 });
-                return false;
-            });
-        }
+            }
 
-        var page = document.querySelector('.strmCreatorConfigPage');
-        if (page) {
-            bindForm(page);
-            loadConfig(page);
-            page.addEventListener('viewshow', function () {
+            function bindForm(page) {
+                var form = page.querySelector('#StrmCreatorConfigForm');
+                if (!form || form.dataset.bound) return;
+                form.dataset.bound = '1';
+                form.addEventListener('submit', function (e) {
+                    e.preventDefault();
+                    ApiClient.getPluginConfiguration(pluginId).then(function (config) {
+                        config.AdminOnly = page.querySelector('#strmCreatorAdminOnly').checked;
+                        ApiClient.updatePluginConfiguration(pluginId, config).then(function () {
+                            Dashboard.processServerConfigurationUpdateResult();
+                        });
+                    });
+                    return false;
+                });
+            }
+
+            function onPageShow(page) {
                 bindForm(page);
                 loadConfig(page);
-            });
-        }
-    })();
-</script>
+            }
+
+            // O painel injeta este HTML na SPA depois do load, então o bind
+            // acontece imediatamente e também no evento de exibição da página.
+            var page = document.querySelector('#StrmCreatorConfigPage');
+            if (page) {
+                onPageShow(page);
+                page.addEventListener('pageshow', function () { onPageShow(page); });
+            }
+        })();
+    </script>
+</body>
+</html>
