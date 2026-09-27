@@ -7,7 +7,8 @@
         libraries: [],
         currentLibrary: null,
         currentPath: '',
-        currentFolderName: ''
+        currentFolderName: '',
+        mode: 'movie'
     };
 
     // ---------- Helpers de API ----------
@@ -200,9 +201,57 @@
         newFolderRow.appendChild(newFolderBtn);
         wrap.appendChild(newFolderRow);
 
-        // --- nome do arquivo ---
+        // --- modo: filme ou série ---
+        var modeRow = document.createElement('div');
+        modeRow.style.cssText = 'display:flex;gap:8px;';
+        var movieBtn = modeButton('Filme');
+        var seriesBtn = modeButton('Série');
+        modeRow.appendChild(movieBtn);
+        modeRow.appendChild(seriesBtn);
+        wrap.appendChild(modeRow);
+
+        // --- campos de série (temporada / 1º episódio) ---
+        var seriesRow = document.createElement('div');
+        seriesRow.style.cssText = 'display:flex;gap:8px;';
+        var seasonInput = numberField('Temporada', 1);
+        var firstEpInput = numberField('1º episódio', 1);
+        seriesRow.appendChild(seasonInput);
+        seriesRow.appendChild(firstEpInput);
+        wrap.appendChild(seriesRow);
+
+        function modeButton(label) {
+            var btn = document.createElement('button');
+            btn.textContent = label;
+            btn.type = 'button';
+            btn.addEventListener('click', function () { setMode(label === 'Série' ? 'series' : 'movie'); });
+            return btn;
+        }
+
+        function numberField(placeholder, def) {
+            var input = document.createElement('input');
+            input.type = 'number';
+            input.min = '1';
+            input.value = String(def);
+            input.placeholder = placeholder;
+            input.style.cssText = dialogInputStyle() + 'flex:1;width:auto;';
+            return input;
+        }
+
+        function setMode(mode) {
+            state.mode = mode;
+            var isSeries = mode === 'series';
+            seriesRow.style.display = isSeries ? 'flex' : 'none';
+            urlLabel.firstChild.nodeValue = isSeries
+                ? 'Links de stream (um por linha = um episódio)'
+                : 'Link de stream';
+            movieBtn.style.cssText = dialogButtonStyle(!isSeries);
+            seriesBtn.style.cssText = dialogButtonStyle(isSeries);
+            updatePreview();
+        }
+
+        // --- nome do arquivo/série ---
         var nameLabel = document.createElement('label');
-        nameLabel.textContent = 'Nome do arquivo';
+        nameLabel.textContent = 'Nome do filme/série';
         nameLabel.style.cssText = 'font-size:.85em;opacity:.7;';
         var nameInput = document.createElement('input');
         nameInput.type = 'text';
@@ -225,6 +274,12 @@
         urlLabel.appendChild(urlInput);
         wrap.appendChild(urlLabel);
 
+        // --- prévia dos nomes ---
+        var preview = document.createElement('div');
+        preview.id = 'strmCreatorPreview';
+        preview.style.cssText = 'font-size:.78em;opacity:.8;max-height:110px;overflow:auto;border:1px dashed #444;border-radius:8px;padding:8px;display:none;white-space:pre-wrap;word-break:break-all;';
+        wrap.appendChild(preview);
+
         // --- status ---
         var status = document.createElement('div');
         status.id = 'strmCreatorStatus';
@@ -246,8 +301,32 @@
                 setStatus('Escolha a biblioteca e a pasta.', true);
                 return;
             }
+
+            if (state.mode === 'series') {
+                var seriesName = nameInput.value.trim();
+                var links = urlInput.value.split('\n').map(function (l) { return l.trim(); }).filter(Boolean);
+                if (!seriesName || !links.length) {
+                    setStatus('Preencha o nome da série e ao menos um link.', true);
+                    return;
+                }
+                var season = parseInt(seasonInput.value, 10) || 1;
+                var first = parseInt(firstEpInput.value, 10) || 1;
+                var episodes = links.map(function (line, i) {
+                    return { episode: first + i, streamUrl: line };
+                });
+                setStatus('Criando ' + episodes.length + ' episódio(s)...', false);
+                api('Episodes', {
+                    method: 'POST',
+                    body: { folderPath: state.currentPath, seriesName: seriesName, season: season, episodes: episodes }
+                }).then(function (result) {
+                    setStatus('✔ ' + result.created + ' criado(s), ' + result.skipped + ' pulado(s), ' + result.failed + ' erro(s).', result.failed > 0);
+                    if (result.created > 0) setTimeout(function () { dlg.close(); }, 2000);
+                }).catch(function (err) { setStatus(err.message, true); });
+                return;
+            }
+
             var fileName = nameInput.value.trim();
-            var streamUrl = urlInput.value.trim();
+            var streamUrl = urlInput.value.split('\n').map(function (l) { return l.trim(); }).filter(Boolean)[0] || '';
             if (!fileName || !streamUrl) {
                 setStatus('Preencha o nome do arquivo e o link de stream.', true);
                 return;
@@ -270,6 +349,33 @@
 
         dlg.addEventListener('close', function () { dlg.remove(); });
 
+        // --- eventos da prévia ---
+        nameInput.addEventListener('input', updatePreview);
+        urlInput.addEventListener('input', updatePreview);
+        seasonInput.addEventListener('input', updatePreview);
+        firstEpInput.addEventListener('input', updatePreview);
+
+        function updatePreview() {
+            if (state.mode !== 'series') {
+                preview.style.display = 'none';
+                return;
+            }
+            var series = nameInput.value.trim() || 'Serie';
+            var season = parseInt(seasonInput.value, 10) || 1;
+            var first = parseInt(firstEpInput.value, 10) || 1;
+            var lines = urlInput.value.split('\n').map(function (l) { return l.trim(); }).filter(Boolean);
+            var names = lines.map(function (_, i) {
+                return series.replace(/ /g, '-') + ' S' + pad(season) + 'E' + pad(first + i) + '.strm';
+            });
+            preview.textContent = names.length ? names.join('\n') : 'Cole os links (um por linha) para ver a prévia dos arquivos.';
+            preview.style.display = 'block';
+        }
+
+        function pad(n) {
+            return (n < 10 ? '0' : '') + n;
+        }
+
+        setMode(state.mode);
         setStatus('', false);
         loadLibraries(libSelect);
     }

@@ -126,6 +126,79 @@ public class StrmCreatorController : ControllerBase
     }
 
     /// <summary>
+    /// Cria um ou mais arquivos .strm de episódios (modo série).
+    /// O nome segue o padrão "Serie S01E01" (com espaços normalizados para "-").
+    /// </summary>
+    [HttpPost("Episodes")]
+    public ActionResult<CreateEpisodesResult> CreateEpisodes([FromBody] CreateEpisodesRequest request)
+    {
+        if (string.IsNullOrWhiteSpace(request.FolderPath))
+        {
+            return BadRequest("Informe 'folderPath'.");
+        }
+
+        if (request.Episodes is not { Count: > 0 })
+        {
+            return BadRequest("Informe ao menos um episódio com 'streamUrl'.");
+        }
+
+        if (request.Season < 0)
+        {
+            return BadRequest("Temporada inválida.");
+        }
+
+        var series = SanitizeName(request.SeriesName);
+        if (series.Length == 0)
+        {
+            return BadRequest("O nome da série ficou vazio após a normalização.");
+        }
+
+        var folder = Path.GetFullPath(request.FolderPath);
+        if (!Directory.Exists(folder))
+        {
+            return NotFound($"Pasta não encontrada: {request.FolderPath}");
+        }
+
+        var result = new CreateEpisodesResult();
+        foreach (var ep in request.Episodes)
+        {
+            if (ep.Episode < 1 || string.IsNullOrWhiteSpace(ep.StreamUrl))
+            {
+                result.Messages.Add($"Episódio {ep.Episode}: número inválido ou link vazio — ignorado.");
+                result.Failed++;
+                continue;
+            }
+
+            // "Serie X S01E02" -> "Serie-X-S01E02" (SanitizeName troca espaços por "-")
+            var fileName = $"{series} S{request.Season:00}E{ep.Episode:00}.strm";
+            var filePath = Path.Combine(folder, fileName);
+
+            if (System.IO.File.Exists(filePath))
+            {
+                result.Messages.Add($"Pulado: '{fileName}' já existe.");
+                result.Skipped++;
+                continue;
+            }
+
+            try
+            {
+                System.IO.File.WriteAllText(filePath, ep.StreamUrl.Trim() + Environment.NewLine);
+                result.Messages.Add($"Criado: '{fileName}'.");
+                result.Created++;
+            }
+            catch (Exception ex)
+            {
+                result.Messages.Add($"Erro em '{fileName}': {ex.Message}");
+                result.Failed++;
+            }
+        }
+
+        result.Success = result.Failed == 0;
+        result.Message = $"{result.Created} criado(s), {result.Skipped} pulado(s), {result.Failed} erro(s).";
+        return Ok(result);
+    }
+
+    /// <summary>
     /// Normaliza nomes de arquivos/pastas: espaços viram "-", hífens
     /// repetidos são colapsados e hífens das pontas são removidos.
     /// Ex.: "Meu  Filme (2024) " -> "Meu-Filme-(2024)".

@@ -26,6 +26,30 @@ public class CreateStrmRequest
     public string StreamUrl { get; set; } = string.Empty;
 }
 
+public class EpisodeStream
+{
+    public int Episode { get; set; }
+    public string StreamUrl { get; set; } = string.Empty;
+}
+
+public class CreateEpisodesRequest
+{
+    public string FolderPath { get; set; } = string.Empty;
+    public string SeriesName { get; set; } = string.Empty;
+    public int Season { get; set; } = 1;
+    public List<EpisodeStream> Episodes { get; set; } = new();
+}
+
+public class CreateEpisodesResult
+{
+    public bool Success { get; set; }
+    public int Created { get; set; }
+    public int Skipped { get; set; }
+    public int Failed { get; set; }
+    public string Message { get; set; } = string.Empty;
+    public List<string> Messages { get; set; } = new();
+}
+
 public class CreateStrmResult
 {
     public bool Success { get; set; }

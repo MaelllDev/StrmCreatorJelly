@@ -8,6 +8,19 @@ Adiciona um botão **"Adicionar .strm"** na página de detalhes do Jellyfin. Ao 
 4. Cola o **link de stream**
 5. Clica em **Criar** → o arquivo `.strm` é gravado na pasta escolhida
 
+### Modo Série
+
+Alternando para **Série**, o popup pede **temporada** e **número do 1º episódio**, e aceita **vários links de uma vez** (um por linha). Cada link vira um episódio em sequência, no padrão:
+
+```
+Nome-Serie S01E01.strm
+Nome-Serie S01E02.strm
+Nome-Serie S01E03.strm
+...
+```
+
+Há uma **prévia em tempo real** dos nomes que serão criados. Arquivos já existentes são pulados (não sobrescrevem).
+
 ## Requisitos
 
 - Jellyfin Server **12.x** (o plugin foi montado contra os pacotes `Jellyfin.Controller`/`Jellyfin.Model` **12.1.0**, .NET 10)
@@ -49,6 +62,7 @@ A DLL fica em `bin/Release/net10.0/Jellyfin.Plugin.StrmCreator.dll`.
 | GET | `/StrmCreator/Folders?path=...` | Lista subpastas (validado contra raízes das bibliotecas) |
 | POST | `/StrmCreator/Folders/Create` | Cria pasta (`{ parentPath, name }`) |
 | POST | `/StrmCreator/Strm` | Cria o `.strm` (`{ folderPath, fileName, streamUrl }`) |
+| POST | `/StrmCreator/Episodes` | Cria lote de episódios (`{ folderPath, seriesName, season, episodes: [{ episode, streamUrl }] }`) |
 | GET | `/StrmCreator/Script` | Serve o JS injetado na UI |
 
 Todos exigem permissão de **administrador** (política `RequiresElevation`), exceto o script.
