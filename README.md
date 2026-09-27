@@ -21,6 +21,15 @@ Nome-Serie S01E03.strm
 
 Há uma **prévia em tempo real** dos nomes que serão criados. Arquivos já existentes são pulados (não sobrescrevem).
 
+## Download
+
+DLLs prontas na aba de [Releases](https://github.com/MaelllDev/StrmCreatorJelly/releases/latest):
+
+- `Jellyfin.Plugin.StrmCreator-jf10.dll` → Jellyfin **10.11.x**
+- `Jellyfin.Plugin.StrmCreator-jf12.dll` → Jellyfin **12.x**
+
+Tutorial de instalação passo a passo: **[how-to-install.md](how-to-install.md)**
+
 ## Requisitos
 
 - **Jellyfin 12.x** ou **Jellyfin 10.11.x** — o projeto gera um build para cada linha (mesma fonte, DLLs separadas):
@@ -85,3 +94,7 @@ Todos exigem permissão de **administrador** (política `RequiresElevation`), ex
 ## Configuração
 
 **Painel → Plugins → Strm Creator**: opção "Apenas administradores podem ver o botão" (padrão: ligado).
+
+## Licença
+
+[BSD 3-Clause](LICENSE) — uso livre, desde que os créditos do autor original (MaelllDev) sejam mantidos.

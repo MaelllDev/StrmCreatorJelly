@@ -20,7 +20,16 @@ Você precisa saber a versão do **servidor** pra escolher a DLL certa:
 
 ## Passo 2 — Baixe a DLL
 
-Opção A — **baixar o código e compilar** (você precisa do .NET SDK 9 ou 10):
+Opção A — **baixar a DLL pronta** (mais fácil, não precisa compilar nada):
+
+1. Vá em https://github.com/MaelllDev/StrmCreatorJelly/releases/latest
+2. Baixe a DLL da sua versão:
+   - `Jellyfin.Plugin.StrmCreator-jf10.dll` → Jellyfin **10.11.x**
+   - `Jellyfin.Plugin.StrmCreator-jf12.dll` → Jellyfin **12.x**
+   - (ou baixe o `StrmCreator-x.y.z.zip`, que tem as duas dentro das pastas `jf10/` e `jf12/`)
+3. Pule para o **Passo 3**
+
+Opção B — **baixar o código e compilar** (você precisa do .NET SDK 9 ou 10):
 
 ```bash
 git clone https://github.com/MaelllDev/StrmCreatorJelly.git
@@ -35,7 +44,7 @@ dist/jf10/Jellyfin.Plugin.StrmCreator.dll   ← Jellyfin 10.11.x
 dist/jf12/Jellyfin.Plugin.StrmCreator.dll   ← Jellyfin 12.x
 ```
 
-Opção B — compilar só o seu alvo:
+Opção B — compilar só o seu alvo (caso já tenha clonado):
 
 ```bash
 dotnet build -c Release -p:JellyfinTarget=jf12   # Jellyfin 12
@@ -44,7 +53,7 @@ dotnet build -c Release -p:JellyfinTarget=jf10   # Jellyfin 10.11
 
 A DLL fica em `bin/Release/net10.0/` (jf12) ou `bin/Release/net9.0/` (jf10).
 
-> Não existe DLL pronta pra download ainda — em breve teremos releases no GitHub.
+> Se você compilou, a DLL fica em `bin/Release/net10.0/` (jf12) ou `bin/Release/net9.0/` (jf10).
 
 ---
 
