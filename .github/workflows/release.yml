@@ -72,10 +72,13 @@ jobs:
 
           CHK10=$(sha256sum "${DIR}/jf10/Jellyfin.Plugin.StrmCreator-jf10.dll" | cut -d' ' -f1)
           CHK12=$(sha256sum "${DIR}/jf12/Jellyfin.Plugin.StrmCreator-jf12.dll" | cut -d' ' -f1)
-          CHKZIP=$(sha256sum "${ZIP:-StrmCreator-${VERSION}.zip}" | cut -d' ' -f1)
+          CHKZIP=$(sha256sum "StrmCreator-${VERSION}.zip" | cut -d' ' -f1)
 
-          ENTRY=$(jq -n \
+          # Gera o entry do manifest e salva o icone em /tmp ANTES de trocar
+          # de branch (a troca para o orphan apaga a arvore de arquivos).
+          jq -n \
             --arg version "${VERSION}" \
+            --arg tag "${TAG}" \
             --arg chk10 "${CHK10}" --arg chk12 "${CHK12}" --arg chkzip "${CHKZIP}" \
             --arg url10 "${BASE}/Jellyfin.Plugin.StrmCreator-jf10.dll" \
             --arg url12 "${BASE}/Jellyfin.Plugin.StrmCreator-jf12.dll" \
@@ -88,26 +91,26 @@ jobs:
               category: "General",
               imageUrl: "https://raw.githubusercontent.com/MaelllDev/StrmCreatorJelly/main/plugins/icon.png",
               versions: [
-                {version: $version, changelog: "Release ${TAG}", targetAbi: "10.11.0.0", sourceUrl: "https://github.com/MaelllDev/StrmCreatorJelly/tree/${TAG}", url: $url10, checksum: $chk10, timestamp: (now | todateiso8601)},
-                {version: $version, changelog: "Release ${TAG}", targetAbi: "12.0.0.0", sourceUrl: "https://github.com/MaelllDev/StrmCreatorJelly/tree/${TAG}", url: $url12, checksum: $chk12, timestamp: (now | todateiso8601)},
-                {version: $version, changelog: "Release ${TAG} (pacote completo)", targetAbi: "10.11.0.0", sourceUrl: "https://github.com/MaelllDev/StrmCreatorJelly/tree/${TAG}", url: $urlzip, checksum: $chkzip, timestamp: (now | todateiso8601)}
-              ]}')
+                {version: $version, changelog: ("Release " + $tag), targetAbi: "10.11.0.0", sourceUrl: ("https://github.com/MaelllDev/StrmCreatorJelly/tree/" + $tag), url: $url10, checksum: $chk10, timestamp: (now | todateiso8601)},
+                {version: $version, changelog: ("Release " + $tag), targetAbi: "12.0.0.0", sourceUrl: ("https://github.com/MaelllDev/StrmCreatorJelly/tree/" + $tag), url: $url12, checksum: $chk12, timestamp: (now | todateiso8601)}
+              ]}' > /tmp/entry.json
+          cat /tmp/entry.json
+          cp plugins/icon.png /tmp/icon.png
 
-          # Empurra os manifests para o branch "catalog"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          if git fetch origin catalog 2>/dev/null; then
-            git checkout -b catalog origin/catalog || git checkout -b catalog
+          if git ls-remote --exit-code --heads origin catalog >/dev/null 2>&1; then
+            git fetch origin catalog
+            git checkout -B catalog origin/catalog
           else
             git checkout --orphan catalog
-            git rm -rf . 2>/dev/null || true
+            git rm -rf . >/dev/null 2>&1 || true
           fi
-          # manifest por linha do Jellyfin + manifest geral
-          echo "${ENTRY}" | jq '.versions = [.versions[] | select(.targetAbi != "12.0.0.0")]' > manifest-10.11.json
-          echo "${ENTRY}" | jq '.versions = [.versions[] | select(.targetAbi != "10.11.0.0")]' > manifest-12.json
-          echo "${ENTRY}" > manifest.json
-          # preserva o icone servido pelo catalogo
-          cp plugins/icon.png icon.png 2>/dev/null || true
+
+          cp /tmp/icon.png icon.png
+          jq '.versions = [.versions[] | select(.targetAbi != "12.0.0.0")]' /tmp/entry.json > manifest-10.11.json
+          jq '.versions = [.versions[] | select(.targetAbi != "10.11.0.0")]' /tmp/entry.json > manifest-12.json
+          cp /tmp/entry.json manifest.json
           git add manifest.json manifest-12.json manifest-10.11.json icon.png
-          git commit -m "Catalog: release ${TAG}" || true
+          git commit -m "Catalog: release ${TAG}"
           git push origin catalog
