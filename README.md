@@ -1,5 +1,9 @@
 # Strm Creator (plugin Jellyfin)
 
+[![Release CI](https://github.com/MaelllDev/StrmCreatorJelly/actions/workflows/release.yml/badge.svg)](https://github.com/MaelllDev/StrmCreatorJelly/actions/workflows/release.yml)
+[![Latest release](https://img.shields.io/github/v/release/MaelllDev/StrmCreatorJelly)](https://github.com/MaelllDev/StrmCreatorJelly/releases/latest)
+[![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
+
 Adiciona um botão **"Adicionar .strm"** na página de detalhes do Jellyfin. Ao clicar, abre um popup onde você:
 
 1. Escolhe a **biblioteca**
