@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Strm Creator</title>
+<style>
+    * { box-sizing: border-box; }
+    body { margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; background:#101014; color:#fff; min-height:100vh; display:flex; justify-content:center; padding:24px 16px; }
+    .wrap { width:100%; max-width:680px; }
+    h1 { font-size:1.5em; margin:0 0 4px; }
+    .sub { opacity:.6; font-size:.9em; margin-bottom:20px; }
+    .card { background:#17171c; border:1px solid rgba(255,255,255,.09); border-radius:12px; padding:18px; margin-bottom:16px; }
+    .step-title { font-size:.8em; text-transform:uppercase; letter-spacing:.08em; opacity:.55; margin:0 0 10px; }
+    select, input[type=text], input[type=number], input[type=password], textarea {
+        width:100%; background:#0d0d10; color:#fff; border:1px solid rgba(255,255,255,.16);
+        border-radius:8px; padding:10px 12px; font-size:14px; outline:none;
+    }
+    select:focus, input:focus, textarea:focus { border-color:#00a4dc; }
+    textarea { font-family:ui-monospace,monospace; resize:vertical; }
+    label { display:block; font-size:.82em; opacity:.65; margin:12px 0 5px; }
+    button {
+        background:#00a4dc; border:none; color:#fff; border-radius:8px;
+        padding:10px 18px; font-size:14px; cursor:pointer; font-weight:600;
+    }
+    button:hover { filter:brightness(1.1); }
+    button.ghost { background:#26262c; }
+    button:disabled { opacity:.5; cursor:default; }
+    .row { display:flex; gap:8px; align-items:center; }
+    .row > * { flex:1; }
+    .row > button { flex:0 0 auto; }
+    .crumb { display:flex; flex-wrap:wrap; gap:4px; align-items:center; padding:8px 10px; border-bottom:1px solid rgba(255,255,255,.07); font-size:.82em; min-height:34px; }
+    .crumb button { background:none; padding:2px 4px; font-weight:400; border-radius:4px; }
+    .crumb .cur { color:#00a4dc; }
+    .crumb .old { color:#9a9a9a; text-decoration:underline; }
+    .crumb .sep { opacity:.35; }
+    .folders { max-height:240px; overflow:auto; padding:6px; }
+    .folder { display:flex; width:100%; text-align:left; align-items:center; gap:10px; background:none; border:none; border-radius:8px; padding:10px; font-size:14px; font-weight:400; }
+    .folder:hover { background:rgba(255,255,255,.07); }
+    .muted { opacity:.45; font-size:.9em; padding:8px 10px; }
+    .status { min-height:1.5em; margin:10px 0; font-size:.92em; }
+    .status.ok { color:#7ddb7d; }
+    .status.err { color:#ff6c6c; }
+    .status.busy { color:#f4c95d; }
+    .preview { display:none; margin-top:8px; font-size:.78em; opacity:.9; max-height:130px; overflow:auto; border:1px dashed rgba(255,255,255,.25); border-radius:8px; padding:10px; white-space:pre-wrap; word-break:break-all; font-family:ui-monospace,monospace; }
+    .banner { background:rgba(0,164,220,.1); border:1px solid rgba(0,164,220,.35); border-radius:10px; padding:14px 16px; margin-bottom:16px; font-size:.92em; line-height:1.5; }
+    .banner code { background:rgba(255,255,255,.08); padding:1px 6px; border-radius:4px; }
+    .hidden { display:none !important; }
+    a { color:#00a4dc; }
+    .toggle { display:flex; gap:8px; }
+    .toggle button { flex:1; background:#26262c; }
+    .toggle button.on { background:#00a4dc; }
+    footer { text-align:center; opacity:.4; font-size:.8em; margin-top:18px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+    <h1>🎬 Strm Creator</h1>
+    <div class="sub">Crie arquivos .strm nas bibliotecas do seu Jellyfin</div>
+
+    <!-- SETUP DA API KEY -->
+    <div id="setup" class="banner hidden">
+        <strong>Conexão com o servidor</strong><br>
+        1. No painel do Jellyfin, vá em <strong>Chaves da API</strong> e clique em <strong>+</strong> para criar uma chave (nome: <code>Strm Creator</code>).<br>
+        2. Cole a chave abaixo. Ela fica salva apenas neste navegador.
+        <div style="margin-top:10px;" class="row">
+            <input type="password" id="keyInput" placeholder="Cole a API key aqui..." autocomplete="off">
+            <button id="keySave">Conectar</button>
+        </div>
+        <div id="setupStatus" class="status"></div>
+    </div>
+
+    <!-- APP -->
+    <div id="app" class="hidden">
+
+        <div class="card">
+            <div class="step-title">1 · Biblioteca</div>
+            <select id="library"><option value="">— Carregando... —</option></select>
+        </div>
+
+        <div class="card">
+            <div class="step-title">2 · Pasta de destino</div>
+            <div style="border:1px solid rgba(255,255,255,.09);border-radius:10px;overflow:hidden;background:rgba(0,0,0,.25);">
+                <div class="crumb" id="crumb"><span class="muted" style="padding:0;">nenhuma pasta selecionada</span></div>
+                <div class="folders" id="folders"><div class="muted">Escolha uma biblioteca para navegar.</div></div>
+                <div class="row" style="padding:10px;border-top:1px solid rgba(255,255,255,.07);">
+                    <input type="text" id="newFolder" placeholder="Nova pasta...">
+                    <button id="newFolderBtn" class="ghost">📁 Criar</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="step-title">3 · Detalhes</div>
+            <div class="toggle" style="margin-bottom:14px;">
+                <button id="modeMovie" class="on">🎬 Filme</button>
+                <button id="modeSeries">📺 Série</button>
+            </div>
+            <div id="seriesRow" class="row hidden" style="margin-bottom:12px;">
+                <div><label>Temporada</label><input type="number" id="season" min="1" value="1"></div>
+                <div><label>1º episódio</label><input type="number" id="firstEp" min="1" value="1"></div>
+            </div>
+            <label>Nome do filme/série <span style="opacity:.5;">(espaços viram "-")</span></label>
+            <input type="text" id="name" placeholder="Ex.: Meu-Filme">
+            <label id="linksLabel">Link de stream</label>
+            <textarea id="links" rows="4" placeholder="https://..."></textarea>
+            <div class="muted" id="linksHint" style="padding:6px 0 0;">No modo Série, um link por linha = um episódio (S01E01, S01E02, ...).</div>
+            <div class="preview" id="preview"></div>
+        </div>
+
+        <div class="card">
+            <div class="step-title">4 · Criar</div>
+            <div class="status" id="status">Pronto.</div>
+            <div class="row">
+                <button id="createBtn">➕ Criar .strm</button>
+                <button id="scanBtn" class="ghost hidden">🔄 Escanear bibliotecas</button>
+            </div>
+        </div>
+
+        <footer>
+            <a href="#" id="rekey" style="opacity:.8;">trocar API key</a> ·
+            <a href="https://github.com/MaelllDev/StrmCreatorJelly" target="_blank">repositório oficial</a>
+        </footer>
+    </div>
+</div>
+
+<script>
+(function () {
+    'use strict';
+
+    var KEY_NAME = 'strmcreator_apikey';
+    var state = { libraries: [], crumbs: [], mode: 'movie' };
+
+    var $ = function (id) { return document.getElementById(id); };
+
+    function f(obj, name) {
+        if (!obj) return undefined;
+        return obj[name] !== undefined ? obj[name] : obj[name.charAt(0).toUpperCase() + name.slice(1)];
+    }
+
+    function setStatus(msg, kind) {
+        var el = $('status');
+        el.textContent = msg;
+        el.className = 'status' + (kind ? ' ' + kind : '');
+    }
+
+    function api(method, path, body) {
+        var opts = {
+            method: method,
+            headers: { 'X-Emby-Token': localStorage.getItem(KEY_NAME) || '' }
+        };
+        if (body !== undefined) {
+            opts.headers['Content-Type'] = 'application/json';
+            opts.body = JSON.stringify(body);
+        }
+        return fetch('/StrmCreator/' + path, opts).then(function (res) {
+            if (!res.ok) {
+                return res.text().then(function (t) {
+                    throw new Error('HTTP ' + res.status + (t ? ' — ' + t.slice(0, 180) : ''));
+                });
+            }
+            return res.json();
+        });
+    }
+
+    function pad(n) { return (n < 10 ? '0' : '') + n; }
+
+    // ---------- setup da chave ----------
+
+    function showSetup(msg) {
+        $('setup').classList.remove('hidden');
+        $('app').classList.add('hidden');
+        if (msg) {
+            var s = $('setupStatus');
+            s.textContent = msg;
+            s.className = 'status err';
+        }
+    }
+
+    function tryConnect(stored) {
+        api('GET', 'Libraries').then(function (libs) {
+            state.libraries = libs || [];
+            $('setup').classList.add('hidden');
+            $('app').classList.remove('hidden');
+            fillLibraries();
+        }).catch(function (err) {
+            localStorage.removeItem(KEY_NAME);
+            showSetup(stored ? 'Chave salva não funciona (' + err.message + '). Gere uma nova e cole abaixo.' : '');
+        });
+    }
+
+    // ---------- bibliotecas ----------
+
+    function fillLibraries() {
+        var sel = $('library');
+        sel.innerHTML = '';
+        var opt = document.createElement('option');
+        opt.value = '';
+        opt.textContent = state.libraries.length ? '— Escolha uma biblioteca —' : '— Nenhuma biblioteca com caminho encontrada —';
+        sel.appendChild(opt);
+        state.libraries.forEach(function (lib, i) {
+            var o = document.createElement('option');
+            o.value = String(i);
+            o.textContent = f(lib, 'name') + '  (' + f(lib, 'path') + ')';
+            sel.appendChild(o);
+        });
+        setStatus('Pronto.');
+    }
+
+    // ---------- navegador ----------
+
+    function currentPath() {
+        return state.crumbs.length ? state.crumbs[state.crumbs.length - 1].path : '';
+    }
+
+    function renderCrumb() {
+        var c = $('crumb');
+        c.innerHTML = '';
+        if (!state.crumbs.length) {
+            var s = document.createElement('span');
+            s.className = 'muted';
+            s.style.padding = '0';
+            s.textContent = 'nenhuma pasta selecionada';
+            c.appendChild(s);
+            return;
+        }
+        state.crumbs.forEach(function (cr, i) {
+            if (i > 0) {
+                var sep = document.createElement('span');
+                sep.className = 'sep';
+                sep.textContent = '/';
+                c.appendChild(sep);
+            }
+            var b = document.createElement('button');
+            b.textContent = (i === 0 ? '🏠 ' : '') + cr.name;
+            b.className = i === state.crumbs.length - 1 ? 'cur' : 'old';
+            b.addEventListener('click', function () {
+                state.crumbs = state.crumbs.slice(0, i + 1);
+                loadFolders();
+            });
+            c.appendChild(b);
+        });
+    }
+
+    function renderFolders(folders) {
+        var list = $('folders');
+        list.innerHTML = '';
+        renderCrumb();
+        if (!folders || !folders.length) {
+            var none = document.createElement('div');
+            none.className = 'muted';
+            none.textContent = 'Sem subpastas — o arquivo será criado direto aqui.';
+            list.appendChild(none);
+            return;
+        }
+        folders.forEach(function (fo) {
+            var row = document.createElement('button');
+            row.className = 'folder';
+            var name = document.createElement('span');
+            name.textContent = '📁 ' + f(fo, 'name');
+            row.appendChild(name);
+            row.addEventListener('click', function () {
+                state.crumbs.push({ name: f(fo, 'name'), path: f(fo, 'path') });
+                loadFolders();
+            });
+            list.appendChild(row);
+        });
+    }
+
+    function loadFolders() {
+        var path = currentPath();
+        if (!path) {
+            renderFolders([]);
+            return;
+        }
+        setStatus('Carregando pastas...', 'busy');
+        api('GET', 'Folders?path=' + encodeURIComponent(path)).then(function (folders) {
+            renderFolders(folders || []);
+            setStatus('Pronto.');
+        }).catch(function (err) {
+            renderFolders([]);
+            setStatus('Erro ao listar pastas: ' + err.message, 'err');
+        });
+    }
+
+    // ---------- modo / prévia ----------
+
+    function setMode(mode) {
+        state.mode = mode;
+        var isSeries = mode === 'series';
+        $('modeMovie').className = isSeries ? '' : 'on';
+        $('modeSeries').className = isSeries ? 'on' : '';
+        $('seriesRow').classList.toggle('hidden', !isSeries);
+        $('linksLabel').textContent = isSeries ? 'Links de stream (um por linha = um episódio)' : 'Link de stream';
+        updatePreview();
+    }
+
+    function linksList() {
+        return $('links').value.split('\n').map(function (l) { return l.trim(); }).filter(Boolean);
+    }
+
+    function updatePreview() {
+        var p = $('preview');
+        if (state.mode !== 'series') { p.style.display = 'none'; return; }
+        var series = $('name').value.trim() || 'Serie';
+        var season = parseInt($('season').value, 10) || 1;
+        var first = parseInt($('firstEp').value, 10) || 1;
+        var lines = linksList();
+        p.textContent = lines.length
+            ? lines.map(function (_, i) { return series.replace(/ /g, '-') + ' S' + pad(season) + 'E' + pad(first + i) + '.strm'; }).join('\n')
+            : 'Cole os links (um por linha) para ver a prévia dos arquivos.';
+        p.style.display = 'block';
+    }
+
+    // ---------- criar ----------
+
+    function create() {
+        if (!currentPath()) { setStatus('Escolha a biblioteca e a pasta de destino.', 'err'); return; }
+        var name = $('name').value.trim();
+        var lines = linksList();
+        $('scanBtn').classList.add('hidden');
+
+        if (state.mode === 'series') {
+            var season = parseInt($('season').value, 10) || 1;
+            var first = parseInt($('firstEp').value, 10) || 1;
+            if (!name || !lines.length) { setStatus('Preencha o nome da série e ao menos um link.', 'err'); return; }
+            setStatus('Criando ' + lines.length + ' episódio(s)...', 'busy');
+            api('POST', 'Episodes', {
+                FolderPath: currentPath(),
+                SeriesName: name,
+                Season: season,
+                Episodes: lines.map(function (line, i) { return { Episode: first + i, StreamUrl: line }; })
+            }).then(function (r) {
+                setStatus('✔ ' + f(r, 'message') + ' Agora escaneie as bibliotecas.', f(r, 'failed') ? 'err' : 'ok');
+                if (f(r, 'created') > 0) $('scanBtn').classList.remove('hidden');
+            }).catch(function (err) { setStatus('Erro: ' + err.message, 'err'); });
+            return;
+        }
+
+        var url = lines[0] || '';
+        if (!name || !url) { setStatus('Preencha o nome do arquivo e o link de stream.', 'err'); return; }
+        setStatus('Criando...', 'busy');
+        api('POST', 'Strm', { FolderPath: currentPath(), FileName: name, StreamUrl: url })
+            .then(function (r) {
+                setStatus('✔ ' + f(r, 'message') + ' Agora escaneie as bibliotecas.', 'ok');
+                $('scanBtn').classList.remove('hidden');
+            })
+            .catch(function (err) { setStatus('Erro: ' + err.message, 'err'); });
+    }
+
+    function scan() {
+        setStatus('Escaneando bibliotecas...', 'busy');
+        fetch('/Library/Refresh', { method: 'POST', headers: { 'X-Emby-Token': localStorage.getItem(KEY_NAME) || '' } })
+            .then(function (res) {
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                setStatus('✔ Scan disparado! O item deve aparecer em instantes.', 'ok');
+            })
+            .catch(function (err) { setStatus('Erro ao disparar o scan: ' + err.message, 'err'); });
+    }
+
+    // ---------- bind ----------
+
+    $('keySave').addEventListener('click', function () {
+        var key = $('keyInput').value.trim();
+        if (!key) return;
+        localStorage.setItem(KEY_NAME, key);
+        tryConnect(true);
+    });
+    $('keyInput').addEventListener('keydown', function (e) { if (e.key === 'Enter') $('keySave').click(); });
+    $('rekey').addEventListener('click', function (e) {
+        e.preventDefault();
+        showSetup();
+    });
+
+    $('library').addEventListener('change', function () {
+        var lib = state.libraries[parseInt(this.value, 10)];
+        if (!lib) { state.crumbs = []; renderFolders([]); return; }
+        state.crumbs = [{ name: f(lib, 'name'), path: f(lib, 'path') }];
+        loadFolders();
+    });
+
+    $('newFolderBtn').addEventListener('click', function () {
+        var input = $('newFolder');
+        var name = input.value.trim();
+        if (!name) return;
+        if (!currentPath()) { setStatus('Escolha uma biblioteca primeiro.', 'err'); return; }
+        api('POST', 'Folders/Create', { ParentPath: currentPath(), Name: name })
+            .then(function () { input.value = ''; setStatus('Pasta criada ✔', 'ok'); loadFolders(); })
+            .catch(function (err) { setStatus('Erro ao criar pasta: ' + err.message, 'err'); });
+    });
+
+    $('modeMovie').addEventListener('click', function () { setMode('movie'); });
+    $('modeSeries').addEventListener('click', function () { setMode('series'); });
+    ['name', 'season', 'firstEp', 'links'].forEach(function (id) {
+        $(id).addEventListener('input', updatePreview);
+    });
+    $('createBtn').addEventListener('click', create);
+    $('scanBtn').addEventListener('click', scan);
+
+    // ---------- start ----------
+
+    if (localStorage.getItem(KEY_NAME)) {
+        tryConnect(true);
+    } else {
+        showSetup();
+    }
+})();
+</script>
+</body>
+</html>

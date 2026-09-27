@@ -4,7 +4,7 @@
     <title>Strm Creator</title>
 </head>
 <body>
-    <div id="StrmCreatorConfigPage" data-role="page" class="page type-interior pluginConfigurationPage" data-require="emby-input,emby-button,emby-select,emby-checkbox">
+    <div id="StrmCreatorConfigPage" data-role="page" class="page type-interior pluginConfigurationPage">
         <div data-role="content">
             <div class="content-primary" style="max-width:720px;">
 
@@ -15,89 +15,42 @@
                             <span>Repositório</span>
                         </a>
                     </div>
-                    <p class="fieldDescription">Cria arquivos .strm nas bibliotecas: escolha a biblioteca, navegue pelas pastas (ou crie uma nova), nomeie e cole o link de stream.</p>
+                    <p class="fieldDescription">Cria arquivos .strm nas bibliotecas: escolha a biblioteca, navegue pelas pastas (ou crie uma nova), nomeie e cole o link de stream. Modo série com lote de episódios (S01E01, S01E02...).</p>
                     <hr />
                 </div>
 
-                <!-- Aviso caso o script da pagina nao execute -->
-                <div id="strmLoading" style="background:rgba(0,164,220,.12);border:1px solid rgba(0,164,220,.4);border-radius:8px;padding:10px 14px;margin-bottom:16px;font-size:.9em;">
-                    ⏳ Carregando módulos do plugin... Se esta mensagem não sumir, pressione <strong>Ctrl+F5</strong> para recarregar a interface.
+                <div class="verticalSection" style="margin-bottom:1.5em;">
+                    <h3 class="sectionTitle" style="font-size:1em;">🚀 Abrir o Strm Creator</h3>
+                    <p class="fieldDescription" style="margin-bottom:14px;">
+                        A criação acontece em uma página dedicada do plugin (o painel do Jellyfin não executa
+                        scripts nas páginas de configuração, então o formulário vive fora dele).
+                    </p>
+                    <a is="emby-linkbutton" id="strmOpenApp" class="raised button-submit emby-button" target="_blank" href="#">
+                        <span>Abrir Strm Creator →</span>
+                    </a>
                 </div>
 
-                <form id="StrmCreatorConfigForm">
-
-                <!-- PASSO 1: biblioteca -->
-                <div class="verticalSection" style="margin-bottom:1.4em;">
-                    <h3 class="sectionTitle" style="font-size:1em;">1 · Biblioteca</h3>
-                    <div class="inputContainer">
-                        <select is="emby-select" id="strmLibrary" style="width:100%;max-width:520px;">
-                            <option value="">— Escolha uma biblioteca —</option>
-                        </select>
-                    </div>
+                <div class="verticalSection" style="margin-bottom:1.5em;">
+                    <h3 class="sectionTitle" style="font-size:1em;">🔑 Configuração da API key (uma vez só)</h3>
+                    <ol style="line-height:1.9;font-size:.95em;margin:8px 0;padding-left:24px;">
+                        <li>No menu lateral, abra <strong>Chaves da API</strong></li>
+                        <li>Clique em <strong>+</strong> e dê o nome <code>Strm Creator</code></li>
+                        <li>Copie a chave gerada</li>
+                        <li>Abra o Strm Creator (botão acima) e cole a chave — ela fica salva só no seu navegador</li>
+                    </ol>
+                    <p class="fieldDescription">
+                        🔒 A chave dá acesso admin ao servidor — use apenas em dispositivos confiáveis.
+                        Para revogar, apague a chave em Chaves da API.
+                    </p>
                 </div>
 
-                <!-- PASSO 2: pasta -->
-                <div class="verticalSection" style="margin-bottom:1.4em;">
-                    <h3 class="sectionTitle" style="font-size:1em;">2 · Pasta de destino</h3>
-                    <div style="border:1px solid rgba(255,255,255,.12);border-radius:10px;overflow:hidden;background:rgba(0,0,0,.25);">
-                        <div id="strmCrumb" style="display:flex;flex-wrap:wrap;gap:4px;align-items:center;padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.08);font-size:.85em;min-height:38px;">
-                            <span style="opacity:.45;">nenhuma pasta selecionada</span>
-                        </div>
-                        <div id="strmFolderList" style="max-height:230px;overflow:auto;padding:6px;">
-                            <div style="opacity:.45;padding:10px;font-size:.9em;">Escolha uma biblioteca para navegar.</div>
-                        </div>
-                        <div style="display:flex;gap:8px;align-items:center;padding:10px 12px;border-top:1px solid rgba(255,255,255,.08);">
-                            <input is="emby-input" type="text" id="strmNewFolder" placeholder="Nova pasta..." style="flex:1;" />
-                            <button is="emby-button" type="button" id="strmNewFolderBtn" class="raised">📁 Criar pasta</button>
-                        </div>
-                    </div>
+                <div class="verticalSection">
+                    <h3 class="sectionTitle" style="font-size:1em;">💡 Depois de criar</h3>
+                    <p class="fieldDescription">
+                        Rode um <strong>scan das bibliotecas</strong> (o app tem botão pra isso) para os novos
+                        itens .strm aparecerem.
+                    </p>
                 </div>
-
-                <!-- PASSO 3: detalhes -->
-                <div class="verticalSection" style="margin-bottom:1.4em;">
-                    <h3 class="sectionTitle" style="font-size:1em;">3 · Detalhes</h3>
-
-                    <div style="display:flex;gap:8px;margin:10px 0 14px;">
-                        <button is="emby-button" type="button" id="strmModeMovie" class="raised button-submit" style="min-width:110px;">🎬 Filme</button>
-                        <button is="emby-button" type="button" id="strmModeSeries" class="raised" style="min-width:110px;">📺 Série</button>
-                    </div>
-
-                    <div id="strmSeriesRow" style="display:none;gap:12px;margin-bottom:12px;">
-                        <div class="inputContainer" style="width:150px;margin-bottom:0;">
-                            <label class="inputLabelInputContainer" for="strmSeason">Temporada</label>
-                            <input is="emby-input" type="number" id="strmSeason" min="1" value="1" />
-                        </div>
-                        <div class="inputContainer" style="width:160px;margin-bottom:0;">
-                            <label class="inputLabelInputContainer" for="strmFirstEp">1º episódio</label>
-                            <input is="emby-input" type="number" id="strmFirstEp" min="1" value="1" />
-                        </div>
-                    </div>
-
-                    <div class="inputContainer">
-                        <label class="inputLabelInputContainer" for="strmName">Nome do filme/série</label>
-                        <input is="emby-input" type="text" id="strmName" placeholder="Ex.: Meu-Filme (espacos viram &quot;-&quot;)" style="max-width:520px;" />
-                    </div>
-
-                    <div class="inputContainer">
-                        <label class="inputLabelInputContainer" id="strmLinksLabel" for="strmLinks">Link de stream</label>
-                        <textarea id="strmLinks" rows="4" placeholder="https://..." style="width:100%;max-width:520px;background:rgba(0,0,0,.3);color:#fff;border:1px solid rgba(255,255,255,.15);border-radius:8px;padding:10px;box-sizing:border-box;font-family:monospace;"></textarea>
-                        <div class="fieldDescription" id="strmLinksHint">No modo Série, um link por linha = um episódio (S01E01, S01E02, ...).</div>
-                    </div>
-
-                    <div id="strmPreview" style="display:none;margin-top:8px;font-size:.8em;opacity:.9;max-height:130px;overflow:auto;border:1px dashed rgba(255,255,255,.25);border-radius:8px;padding:10px;white-space:pre-wrap;word-break:break-all;max-width:520px;font-family:monospace;"></div>
-                </div>
-
-                <!-- PASSO 4: criar -->
-                <div class="verticalSection" style="margin-bottom:2em;">
-                    <h3 class="sectionTitle" style="font-size:1em;">4 · Criar</h3>
-                    <div id="strmStatus" style="min-height:1.4em;margin:8px 0;font-size:.95em;">Pronto.</div>
-                    <div style="display:flex;gap:8px;flex-wrap:wrap;">
-                        <button is="emby-button" type="submit" id="strmCreateBtn" class="raised button-submit">➕ Criar .strm</button>
-                        <button is="emby-button" type="button" id="strmScanBtn" class="raised" style="display:none;">🔄 Escanear bibliotecas agora</button>
-                    </div>
-                </div>
-
-                </form>
 
             </div>
         </div>
@@ -105,369 +58,19 @@
     <script type="text/javascript">
         (function () {
             'use strict';
-
-            var pluginId = 'e1f2a3b4-c5d6-4e7f-8a9b-0c1d2e3f4a5b';
-            var state = {
-                libraries: [],
-                crumbs: [],
-                mode: 'movie',
-                bound: false,
-                tries: 0
-            };
-
-            // O Jellyfin serializa JSON em PascalCase; aceito os dois casos.
-            function f(obj, name) {
-                if (!obj) return undefined;
-                return obj[name] !== undefined ? obj[name] : obj[name.charAt(0).toUpperCase() + name.slice(1)];
-            }
-
-            function setStatus(msg, isError) {
-                var el = document.getElementById('strmStatus');
+            // Aponta o botão para o app do plugin, respeitando baseurl.
+            function link() {
+                var el = document.getElementById('strmOpenApp');
                 if (!el) return;
-                el.textContent = msg;
-                el.style.color = isError ? '#ff6c6c' : (msg ? '#7ddb7d' : '');
-            }
-
-            function reportError(where, err) {
-                var detail = '';
-                if (err) {
-                    if (err.status) detail = 'HTTP ' + err.status;
-                    if (err.responseText) detail += ' ' + String(err.responseText).slice(0, 180);
-                    if (err.message && !detail) detail = err.message;
-                    if (err.statusText && !detail) detail = err.statusText;
-                }
-                setStatus('⚠ ' + where + (detail ? ': ' + detail : ' falhou.'), true);
-            }
-
-            function ajax(method, path, body) {
-                var request = {
-                    type: method,
-                    url: ApiClient.getUrl('/StrmCreator/' + path),
-                    dataType: 'json'
-                };
-                if (body !== undefined) {
-                    request.contentType = 'application/json';
-                    request.data = JSON.stringify(body);
-                }
-                return ApiClient.ajax(request);
-            }
-
-            function pad(n) { return (n < 10 ? '0' : '') + n; }
-
-            // ---------- bibliotecas ----------
-
-            function loadLibraries() {
-                var sel = document.getElementById('strmLibrary');
-                setStatus('Carregando bibliotecas...', false);
-
-                var promise = ajax('GET', 'Libraries').catch(function () {
-                    // Fallback: API padrao do servidor (Library/VirtualFolders)
-                    return ApiClient.ajax({
-                        type: 'GET',
-                        url: ApiClient.getUrl('Library/VirtualFolders'),
-                        dataType: 'json'
-                    }).then(function (vfs) {
-                        return (vfs || []).map(function (v) {
-                            return { Name: f(v, 'name'), Path: (f(v, 'locations') || [])[0] || '' };
-                        }).filter(function (l) { return l.Path; });
-                    });
-                });
-
-                promise.then(function (libs) {
-                    state.libraries = libs || [];
-                    sel.innerHTML = '';
-                    var opt = document.createElement('option');
-                    opt.value = '';
-                    opt.textContent = state.libraries.length
-                        ? '— Escolha uma biblioteca —'
-                        : '— Nenhuma biblioteca com caminho encontrada —';
-                    sel.appendChild(opt);
-                    state.libraries.forEach(function (lib, i) {
-                        var o = document.createElement('option');
-                        o.value = String(i);
-                        o.textContent = f(lib, 'name') + '  (' + f(lib, 'path') + ')';
-                        sel.appendChild(o);
-                    });
-                    setStatus('Pronto.', false);
-                }).catch(function (err) {
-                    sel.innerHTML = '';
-                    var o = document.createElement('option');
-                    o.value = '';
-                    o.textContent = '— Erro ao carregar bibliotecas —';
-                    sel.appendChild(o);
-                    reportError('Erro ao carregar bibliotecas', err);
-                });
-            }
-
-            // ---------- navegador ----------
-
-            function currentPath() {
-                return state.crumbs.length ? state.crumbs[state.crumbs.length - 1].path : '';
-            }
-
-            function renderCrumb() {
-                var crumb = document.getElementById('strmCrumb');
-                crumb.innerHTML = '';
-                if (!state.crumbs.length) {
-                    var empty = document.createElement('span');
-                    empty.textContent = 'nenhuma pasta selecionada';
-                    empty.style.cssText = 'opacity:.45;';
-                    crumb.appendChild(empty);
-                    return;
-                }
-                state.crumbs.forEach(function (c, i) {
-                    if (i > 0) {
-                        var sep = document.createElement('span');
-                        sep.textContent = ' / ';
-                        sep.style.cssText = 'opacity:.4;';
-                        crumb.appendChild(sep);
-                    }
-                    var seg = document.createElement('button');
-                    seg.type = 'button';
-                    seg.textContent = (i === 0 ? '🏠 ' : '') + c.name;
-                    seg.style.cssText = 'background:none;border:none;color:' + (i === state.crumbs.length - 1 ? '#00a4dc' : '#9a9a9a') + ';cursor:pointer;padding:2px 4px;font-size:1em;text-decoration:' + (i === state.crumbs.length - 1 ? 'none' : 'underline') + ';';
-                    seg.addEventListener('click', function () {
-                        state.crumbs = state.crumbs.slice(0, i + 1);
-                        loadFolders();
-                    });
-                    crumb.appendChild(seg);
-                });
-            }
-
-            function renderFolders(folders) {
-                var list = document.getElementById('strmFolderList');
-                list.innerHTML = '';
-                renderCrumb();
-
-                if (!folders || !folders.length) {
-                    var none = document.createElement('div');
-                    none.textContent = 'Sem subpastas — o arquivo será criado direto aqui.';
-                    none.style.cssText = 'opacity:.45;padding:10px;font-size:.9em;';
-                    list.appendChild(none);
-                    return;
-                }
-                folders.forEach(function (fo) {
-                    var row = document.createElement('button');
-                    row.type = 'button';
-                    var safe = String(f(fo, 'name')).replace(/&/g, '&amp;').replace(/</g, '&lt;');
-                    row.innerHTML = '<span style="margin-right:8px;">📁</span><span>' + safe + '</span>';
-                    row.style.cssText = 'display:flex;width:100%;text-align:left;align-items:center;background:none;border:none;border-radius:6px;color:#fff;padding:9px 8px;cursor:pointer;font-size:14px;';
-                    row.addEventListener('mouseenter', function () { row.style.background = 'rgba(255,255,255,.08)'; });
-                    row.addEventListener('mouseleave', function () { row.style.background = 'none'; });
-                    row.addEventListener('click', function () {
-                        state.crumbs.push({ name: f(fo, 'name'), path: f(fo, 'path') });
-                        loadFolders();
-                    });
-                    list.appendChild(row);
-                });
-            }
-
-            function loadFolders() {
-                var path = currentPath();
-                if (!path) {
-                    renderFolders([]);
-                    return;
-                }
-                ajax('GET', 'Folders?path=' + encodeURIComponent(path)).then(function (folders) {
-                    renderFolders(folders || []);
-                }).catch(function (err) {
-                    renderFolders([]);
-                    reportError('Erro ao listar pastas', err);
-                });
-            }
-
-            // ---------- modo ----------
-
-            function setMode(mode) {
-                state.mode = mode;
-                var isSeries = mode === 'series';
-
-                // destaque direto pelo estilo (independente de classes emby)
-                document.getElementById('strmModeMovie').style.background = isSeries ? '' : '#00a4dc';
-                document.getElementById('strmModeMovie').style.color = isSeries ? '' : '#fff';
-                document.getElementById('strmModeSeries').style.background = isSeries ? '#00a4dc' : '';
-                document.getElementById('strmModeSeries').style.color = isSeries ? '#fff' : '';
-
-                document.getElementById('strmSeriesRow').style.display = isSeries ? 'flex' : 'none';
-                document.getElementById('strmLinksLabel').textContent = isSeries
-                    ? 'Links de stream (um por linha = um episódio)'
-                    : 'Link de stream';
-                updatePreview();
-            }
-
-            function linksList() {
-                return document.getElementById('strmLinks').value
-                    .split('\n').map(function (l) { return l.trim(); }).filter(Boolean);
-            }
-
-            function updatePreview() {
-                var preview = document.getElementById('strmPreview');
-                if (state.mode !== 'series') {
-                    preview.style.display = 'none';
-                    return;
-                }
-                var series = document.getElementById('strmName').value.trim() || 'Serie';
-                var season = parseInt(document.getElementById('strmSeason').value, 10) || 1;
-                var first = parseInt(document.getElementById('strmFirstEp').value, 10) || 1;
-                var lines = linksList();
-                preview.textContent = lines.length
-                    ? lines.map(function (_, i) {
-                        return series.replace(/ /g, '-') + ' S' + pad(season) + 'E' + pad(first + i) + '.strm';
-                    }).join('\n')
-                    : 'Cole os links (um por linha) para ver a prévia dos arquivos.';
-                preview.style.display = 'block';
-            }
-
-            // ---------- criar ----------
-
-            function showScan() {
-                document.getElementById('strmScanBtn').style.display = '';
-            }
-
-            function create() {
-                if (!currentPath()) {
-                    setStatus('Escolha a biblioteca e a pasta de destino.', true);
-                    return;
-                }
-                var name = document.getElementById('strmName').value.trim();
-                var lines = linksList();
-                document.getElementById('strmScanBtn').style.display = 'none';
-
-                if (state.mode === 'series') {
-                    var season = parseInt(document.getElementById('strmSeason').value, 10) || 1;
-                    var first = parseInt(document.getElementById('strmFirstEp').value, 10) || 1;
-                    if (!name || !lines.length) {
-                        setStatus('Preencha o nome da série e ao menos um link.', true);
-                        return;
-                    }
-                    setStatus('Criando ' + lines.length + ' episódio(s)...', false);
-                    ajax('POST', 'Episodes', {
-                        FolderPath: currentPath(),
-                        SeriesName: name,
-                        Season: season,
-                        Episodes: lines.map(function (line, i) {
-                            return { Episode: first + i, StreamUrl: line };
-                        })
-                    }).then(function (result) {
-                        setStatus('✔ ' + f(result, 'message') + ' Rode um scan (ou clique no botão abaixo).', !!f(result, 'failed'));
-                        if (f(result, 'created') > 0) showScan();
-                    }).catch(function (err) {
-                        reportError('Erro ao criar episódios', err);
-                    });
-                    return;
-                }
-
-                var streamUrl = lines[0] || '';
-                if (!name || !streamUrl) {
-                    setStatus('Preencha o nome do arquivo e o link de stream.', true);
-                    return;
-                }
-                setStatus('Criando...', false);
-                ajax('POST', 'Strm', {
-                    FolderPath: currentPath(),
-                    FileName: name,
-                    StreamUrl: streamUrl
-                }).then(function (result) {
-                    setStatus('✔ ' + f(result, 'message') + ' Rode um scan (ou clique no botão abaixo).', false);
-                    showScan();
-                }).catch(function (err) {
-                    reportError('Erro ao criar o .strm', err);
-                });
-            }
-
-            function scanLibraries() {
-                setStatus('Escaneando bibliotecas...', false);
-                ApiClient.ajax({
-                    type: 'POST',
-                    url: ApiClient.getUrl('/Library/Refresh'),
-                    dataType: 'json'
-                }).then(function () {
-                    setStatus('✔ Scan disparado! O item deve aparecer em instantes.', false);
-                }).catch(function (err) {
-                    reportError('Erro ao disparar o scan', err);
-                });
-            }
-
-            // ---------- bind ----------
-
-            function bindPage() {
-                if (state.bound) return;
-                state.bound = true;
-
-                var loading = document.getElementById('strmLoading');
-                if (loading) loading.style.display = 'none';
-
-                document.getElementById('strmLibrary').addEventListener('change', function () {
-                    var lib = state.libraries[parseInt(this.value, 10)];
-                    if (!lib) {
-                        state.crumbs = [];
-                        renderFolders([]);
-                        return;
-                    }
-                    state.crumbs = [{ name: f(lib, 'name'), path: f(lib, 'path') }];
-                    loadFolders();
-                });
-
-                document.getElementById('strmNewFolderBtn').addEventListener('click', function () {
-                    var input = document.getElementById('strmNewFolder');
-                    var name = input.value.trim();
-                    if (!name) return;
-                    if (!currentPath()) {
-                        setStatus('Escolha uma biblioteca primeiro.', true);
-                        return;
-                    }
-                    ajax('POST', 'Folders/Create', { ParentPath: currentPath(), Name: name })
-                        .then(function () {
-                            input.value = '';
-                            setStatus('Pasta criada ✔', false);
-                            loadFolders();
-                        })
-                        .catch(function (err) {
-                            reportError('Erro ao criar pasta', err);
-                        });
-                });
-
-                document.getElementById('strmModeMovie').addEventListener('click', function () { setMode('movie'); });
-                document.getElementById('strmModeSeries').addEventListener('click', function () { setMode('series'); });
-                ['strmName', 'strmSeason', 'strmFirstEp', 'strmLinks'].forEach(function (id) {
-                    document.getElementById(id).addEventListener('input', updatePreview);
-                });
-
-                document.getElementById('StrmCreatorConfigForm').addEventListener('submit', function (e) {
-                    e.preventDefault();
-                    create();
-                    return false;
-                });
-
-                document.getElementById('strmScanBtn').addEventListener('click', scanLibraries);
-
-                setMode('movie');
-                loadLibraries();
-            }
-
-            function tryInit() {
-                state.tries++;
                 try {
-                    var page = document.getElementById('StrmCreatorConfigPage');
-                    if (!page) return false;
-                    bindPage();
-                    return true;
+                    el.href = ApiClient.getUrl('/StrmCreator/App');
                 } catch (e) {
-                    setStatus('Erro ao iniciar: ' + (e && e.message ? e.message : e), true);
-                    if (window.console) console.error('StrmCreator init:', e);
-                    return true;
+                    el.href = window.location.origin + '/StrmCreator/App';
                 }
             }
-
-            // O painel injeta este HTML na SPA. Tenta ligar imediatamente e
-            // re-tenta algumas vezes (o HTML pode chegar depois do script).
-            if (!tryInit()) {
-                var timer = setInterval(function () {
-                    if (tryInit() || state.tries > 20) clearInterval(timer);
-                }, 250);
-            }
-            window.addEventListener('pageshow', function () { tryInit(); });
-            window.__StrmCreatorInit = tryInit; // re-executável em debug
+            link();
+            var page = document.getElementById('StrmCreatorConfigPage');
+            if (page) page.addEventListener('pageshow', link);
         })();
     </script>
 </body>
