@@ -4,7 +4,7 @@
     <title>Strm Creator</title>
 </head>
 <body>
-    <div id="StrmCreatorConfigPage" data-role="page" class="page type-interior pluginConfigurationPage" data-require="emby-input,emby-button,emby-checkbox">
+    <div id="StrmCreatorConfigPage" data-role="page" class="page type-interior pluginConfigurationPage" data-require="emby-input,emby-button,emby-select,emby-checkbox">
         <div data-role="content">
             <div class="content-primary" style="max-width:720px;">
 
@@ -12,7 +12,6 @@
                     <div class="sectionTitleContainer flex align-items-center">
                         <h2 class="sectionTitle">Strm Creator</h2>
                         <a is="emby-linkbutton" class="raised raised-mini emby-button" style="margin-left:2em" target="_blank" href="https://github.com/MaelllDev/StrmCreatorJelly">
-                            <i class="md-icon button-icon button-icon-left secondaryText"></i>
                             <span>Repositório</span>
                         </a>
                     </div>
@@ -20,47 +19,47 @@
                     <hr />
                 </div>
 
+                <!-- Aviso caso o script da pagina nao execute -->
+                <div id="strmLoading" style="background:rgba(0,164,220,.12);border:1px solid rgba(0,164,220,.4);border-radius:8px;padding:10px 14px;margin-bottom:16px;font-size:.9em;">
+                    ⏳ Carregando módulos do plugin... Se esta mensagem não sumir, pressione <strong>Ctrl+F5</strong> para recarregar a interface.
+                </div>
+
                 <form id="StrmCreatorConfigForm">
 
                 <!-- PASSO 1: biblioteca -->
-                <div class="verticalSection" style="margin-bottom:1.2em;">
+                <div class="verticalSection" style="margin-bottom:1.4em;">
                     <h3 class="sectionTitle" style="font-size:1em;">1 · Biblioteca</h3>
                     <div class="inputContainer">
-                        <select is="emby-select" id="strmLibrary" style="width:100%;max-width:520px;"></select>
+                        <select is="emby-select" id="strmLibrary" style="width:100%;max-width:520px;">
+                            <option value="">— Escolha uma biblioteca —</option>
+                        </select>
                     </div>
                 </div>
 
                 <!-- PASSO 2: pasta -->
-                <div class="verticalSection" style="margin-bottom:1.2em;">
+                <div class="verticalSection" style="margin-bottom:1.4em;">
                     <h3 class="sectionTitle" style="font-size:1em;">2 · Pasta de destino</h3>
-                    <div id="strmBrowser" style="border:1px solid rgba(255,255,255,.12);border-radius:10px;overflow:hidden;background:rgba(0,0,0,.25);">
-                        <div id="strmCrumb" style="display:flex;flex-wrap:wrap;gap:4px;align-items:center;padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.08);font-size:.85em;min-height:38px;"></div>
+                    <div style="border:1px solid rgba(255,255,255,.12);border-radius:10px;overflow:hidden;background:rgba(0,0,0,.25);">
+                        <div id="strmCrumb" style="display:flex;flex-wrap:wrap;gap:4px;align-items:center;padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.08);font-size:.85em;min-height:38px;">
+                            <span style="opacity:.45;">nenhuma pasta selecionada</span>
+                        </div>
                         <div id="strmFolderList" style="max-height:230px;overflow:auto;padding:6px;">
                             <div style="opacity:.45;padding:10px;font-size:.9em;">Escolha uma biblioteca para navegar.</div>
                         </div>
                         <div style="display:flex;gap:8px;align-items:center;padding:10px 12px;border-top:1px solid rgba(255,255,255,.08);">
                             <input is="emby-input" type="text" id="strmNewFolder" placeholder="Nova pasta..." style="flex:1;" />
-                            <button is="emby-button" type="button" id="strmNewFolderBtn" class="raised">
-                                <i class="md-icon" style="font-size:1.1em;vertical-align:middle;">create_new_folder</i>
-                                <span>Criar</span>
-                            </button>
+                            <button is="emby-button" type="button" id="strmNewFolderBtn" class="raised">📁 Criar pasta</button>
                         </div>
                     </div>
                 </div>
 
                 <!-- PASSO 3: detalhes -->
-                <div class="verticalSection" style="margin-bottom:1.2em;">
+                <div class="verticalSection" style="margin-bottom:1.4em;">
                     <h3 class="sectionTitle" style="font-size:1em;">3 · Detalhes</h3>
 
                     <div style="display:flex;gap:8px;margin:10px 0 14px;">
-                        <button is="emby-button" type="button" id="strmModeMovie" class="raised button-submit" style="min-width:110px;">
-                            <i class="md-icon" style="font-size:1.1em;vertical-align:middle;">movie</i>
-                            <span>Filme</span>
-                        </button>
-                        <button is="emby-button" type="button" id="strmModeSeries" class="raised" style="min-width:110px;">
-                            <i class="md-icon" style="font-size:1.1em;vertical-align:middle;">tv</i>
-                            <span>Série</span>
-                        </button>
+                        <button is="emby-button" type="button" id="strmModeMovie" class="raised button-submit" style="min-width:110px;">🎬 Filme</button>
+                        <button is="emby-button" type="button" id="strmModeSeries" class="raised" style="min-width:110px;">📺 Série</button>
                     </div>
 
                     <div id="strmSeriesRow" style="display:none;gap:12px;margin-bottom:12px;">
@@ -88,21 +87,13 @@
                     <div id="strmPreview" style="display:none;margin-top:8px;font-size:.8em;opacity:.9;max-height:130px;overflow:auto;border:1px dashed rgba(255,255,255,.25);border-radius:8px;padding:10px;white-space:pre-wrap;word-break:break-all;max-width:520px;font-family:monospace;"></div>
                 </div>
 
-                </div>
-
                 <!-- PASSO 4: criar -->
                 <div class="verticalSection" style="margin-bottom:2em;">
                     <h3 class="sectionTitle" style="font-size:1em;">4 · Criar</h3>
-                    <div id="strmStatus" style="min-height:1.4em;margin:8px 0;font-size:.95em;"></div>
+                    <div id="strmStatus" style="min-height:1.4em;margin:8px 0;font-size:.95em;">Pronto.</div>
                     <div style="display:flex;gap:8px;flex-wrap:wrap;">
-                        <button is="emby-button" type="submit" id="strmCreateBtn" class="raised button-submit">
-                            <i class="md-icon" style="font-size:1.1em;vertical-align:middle;">note_add</i>
-                            <span>Criar .strm</span>
-                        </button>
-                        <button is="emby-button" type="button" id="strmScanBtn" class="raised" style="display:none;">
-                            <i class="md-icon" style="font-size:1.1em;vertical-align:middle;">refresh</i>
-                            <span>Escanear bibliotecas agora</span>
-                        </button>
+                        <button is="emby-button" type="submit" id="strmCreateBtn" class="raised button-submit">➕ Criar .strm</button>
+                        <button is="emby-button" type="button" id="strmScanBtn" class="raised" style="display:none;">🔄 Escanear bibliotecas agora</button>
                     </div>
                 </div>
 
@@ -120,7 +111,8 @@
                 libraries: [],
                 crumbs: [],
                 mode: 'movie',
-                bound: false
+                bound: false,
+                tries: 0
             };
 
             // O Jellyfin serializa JSON em PascalCase; aceito os dois casos.
@@ -129,10 +121,8 @@
                 return obj[name] !== undefined ? obj[name] : obj[name.charAt(0).toUpperCase() + name.slice(1)];
             }
 
-            function statusEl() { return document.getElementById('strmStatus'); }
-
             function setStatus(msg, isError) {
-                var el = statusEl();
+                var el = document.getElementById('strmStatus');
                 if (!el) return;
                 el.textContent = msg;
                 el.style.color = isError ? '#ff6c6c' : (msg ? '#7ddb7d' : '');
@@ -142,8 +132,8 @@
                 var detail = '';
                 if (err) {
                     if (err.status) detail = 'HTTP ' + err.status;
-                    if (err.responseText) detail += ' ' + String(err.responseText).slice(0, 200);
-                    if (err.message) detail += ' ' + err.message;
+                    if (err.responseText) detail += ' ' + String(err.responseText).slice(0, 180);
+                    if (err.message && !detail) detail = err.message;
                     if (err.statusText && !detail) detail = err.statusText;
                 }
                 setStatus('⚠ ' + where + (detail ? ': ' + detail : ' falhou.'), true);
@@ -169,7 +159,21 @@
             function loadLibraries() {
                 var sel = document.getElementById('strmLibrary');
                 setStatus('Carregando bibliotecas...', false);
-                ajax('GET', 'Libraries').then(function (libs) {
+
+                var promise = ajax('GET', 'Libraries').catch(function () {
+                    // Fallback: API padrao do servidor (Library/VirtualFolders)
+                    return ApiClient.ajax({
+                        type: 'GET',
+                        url: ApiClient.getUrl('Library/VirtualFolders'),
+                        dataType: 'json'
+                    }).then(function (vfs) {
+                        return (vfs || []).map(function (v) {
+                            return { Name: f(v, 'name'), Path: (f(v, 'locations') || [])[0] || '' };
+                        }).filter(function (l) { return l.Path; });
+                    });
+                });
+
+                promise.then(function (libs) {
                     state.libraries = libs || [];
                     sel.innerHTML = '';
                     var opt = document.createElement('option');
@@ -181,15 +185,15 @@
                     state.libraries.forEach(function (lib, i) {
                         var o = document.createElement('option');
                         o.value = String(i);
-                        o.textContent = f(lib, 'name') + ' (' + f(lib, 'path') + ')';
+                        o.textContent = f(lib, 'name') + '  (' + f(lib, 'path') + ')';
                         sel.appendChild(o);
                     });
-                    setStatus('', false);
+                    setStatus('Pronto.', false);
                 }).catch(function (err) {
                     sel.innerHTML = '';
                     var o = document.createElement('option');
                     o.value = '';
-                    o.textContent = '— Erro ao carregar —';
+                    o.textContent = '— Erro ao carregar bibliotecas —';
                     sel.appendChild(o);
                     reportError('Erro ao carregar bibliotecas', err);
                 });
@@ -201,14 +205,16 @@
                 return state.crumbs.length ? state.crumbs[state.crumbs.length - 1].path : '';
             }
 
-            function currentLabel() {
-                return state.crumbs.map(function (c) { return c.name; }).join(' / ');
-            }
-
             function renderCrumb() {
                 var crumb = document.getElementById('strmCrumb');
                 crumb.innerHTML = '';
-                if (!state.crumbs.length) return;
+                if (!state.crumbs.length) {
+                    var empty = document.createElement('span');
+                    empty.textContent = 'nenhuma pasta selecionada';
+                    empty.style.cssText = 'opacity:.45;';
+                    crumb.appendChild(empty);
+                    return;
+                }
                 state.crumbs.forEach(function (c, i) {
                     if (i > 0) {
                         var sep = document.createElement('span');
@@ -218,7 +224,7 @@
                     }
                     var seg = document.createElement('button');
                     seg.type = 'button';
-                    seg.textContent = c.name;
+                    seg.textContent = (i === 0 ? '🏠 ' : '') + c.name;
                     seg.style.cssText = 'background:none;border:none;color:' + (i === state.crumbs.length - 1 ? '#00a4dc' : '#9a9a9a') + ';cursor:pointer;padding:2px 4px;font-size:1em;text-decoration:' + (i === state.crumbs.length - 1 ? 'none' : 'underline') + ';';
                     seg.addEventListener('click', function () {
                         state.crumbs = state.crumbs.slice(0, i + 1);
@@ -243,8 +249,8 @@
                 folders.forEach(function (fo) {
                     var row = document.createElement('button');
                     row.type = 'button';
-                    row.innerHTML = '<i class="md-icon" style="font-size:1.2em;vertical-align:middle;color:#00a4dc;">folder</i> <span>' +
-                        String(f(fo, 'name')).replace(/&/g, '&amp;').replace(/</g, '&lt;') + '</span>';
+                    var safe = String(f(fo, 'name')).replace(/&/g, '&amp;').replace(/</g, '&lt;');
+                    row.innerHTML = '<span style="margin-right:8px;">📁</span><span>' + safe + '</span>';
                     row.style.cssText = 'display:flex;width:100%;text-align:left;align-items:center;background:none;border:none;border-radius:6px;color:#fff;padding:9px 8px;cursor:pointer;font-size:14px;';
                     row.addEventListener('mouseenter', function () { row.style.background = 'rgba(255,255,255,.08)'; });
                     row.addEventListener('mouseleave', function () { row.style.background = 'none'; });
@@ -275,14 +281,12 @@
             function setMode(mode) {
                 state.mode = mode;
                 var isSeries = mode === 'series';
-                var movieBtn = document.getElementById('strmModeMovie');
-                var seriesBtn = document.getElementById('strmModeSeries');
 
-                // troca visual direta via estilo (independente do emby-button)
-                movieBtn.style.background = isSeries ? '' : '#00a4dc';
-                movieBtn.style.color = isSeries ? '' : '#fff';
-                seriesBtn.style.background = isSeries ? '#00a4dc' : '';
-                seriesBtn.style.color = isSeries ? '#fff' : '';
+                // destaque direto pelo estilo (independente de classes emby)
+                document.getElementById('strmModeMovie').style.background = isSeries ? '' : '#00a4dc';
+                document.getElementById('strmModeMovie').style.color = isSeries ? '' : '#fff';
+                document.getElementById('strmModeSeries').style.background = isSeries ? '#00a4dc' : '';
+                document.getElementById('strmModeSeries').style.color = isSeries ? '#fff' : '';
 
                 document.getElementById('strmSeriesRow').style.display = isSeries ? 'flex' : 'none';
                 document.getElementById('strmLinksLabel').textContent = isSeries
@@ -315,6 +319,10 @@
             }
 
             // ---------- criar ----------
+
+            function showScan() {
+                document.getElementById('strmScanBtn').style.display = '';
+            }
 
             function create() {
                 if (!currentPath()) {
@@ -367,10 +375,6 @@
                 });
             }
 
-            function showScan() {
-                document.getElementById('strmScanBtn').style.display = '';
-            }
-
             function scanLibraries() {
                 setStatus('Escaneando bibliotecas...', false);
                 ApiClient.ajax({
@@ -389,6 +393,9 @@
             function bindPage() {
                 if (state.bound) return;
                 state.bound = true;
+
+                var loading = document.getElementById('strmLoading');
+                if (loading) loading.style.display = 'none';
 
                 document.getElementById('strmLibrary').addEventListener('change', function () {
                     var lib = state.libraries[parseInt(this.value, 10)];
@@ -438,26 +445,29 @@
                 loadLibraries();
             }
 
-            function init() {
+            function tryInit() {
+                state.tries++;
                 try {
                     var page = document.getElementById('StrmCreatorConfigPage');
-                    if (!page) {
-                        if (window.console) console.warn('StrmCreator: página não encontrada no DOM.');
-                        return;
-                    }
+                    if (!page) return false;
                     bindPage();
-                    page.addEventListener('pageshow', bindPage);
+                    return true;
                 } catch (e) {
                     setStatus('Erro ao iniciar: ' + (e && e.message ? e.message : e), true);
                     if (window.console) console.error('StrmCreator init:', e);
+                    return true;
                 }
             }
 
-            // O painel injeta este HTML na SPA: o script roda logo após a
-            // injeção (jQuery executa <script> inline) e o try/catch acima
-            // garante que qualquer erro apareça na tela.
-            init();
-            window.__StrmCreatorInit = init; // re-executável em debug
+            // O painel injeta este HTML na SPA. Tenta ligar imediatamente e
+            // re-tenta algumas vezes (o HTML pode chegar depois do script).
+            if (!tryInit()) {
+                var timer = setInterval(function () {
+                    if (tryInit() || state.tries > 20) clearInterval(timer);
+                }, 250);
+            }
+            window.addEventListener('pageshow', function () { tryInit(); });
+            window.__StrmCreatorInit = tryInit; // re-executável em debug
         })();
     </script>
 </body>
