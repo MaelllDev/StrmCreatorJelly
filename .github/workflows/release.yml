@@ -1,0 +1,56 @@
+name: Release
+
+# Dispara automaticamente quando uma tag nova (ex.: v0.2.2) é enviada.
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Precisa dos dois SDKs: net9.0 (jf10) e net10.0 (jf12)
+      - name: Setup .NET SDKs
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            9.0.x
+            10.0.x
+
+      - name: Build jf10 (Jellyfin 10.11)
+        run: dotnet build -c Release -p:JellyfinTarget=jf10 -v q
+
+      - name: Build jf12 (Jellyfin 12)
+        run: dotnet build -c Release -p:JellyfinTarget=jf12 -v q
+
+      # Organiza os artifacts com os mesmos nomes usados nas releases manuais
+      - name: Organizar artifacts
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          mkdir -p "release/StrmCreator-${VERSION}/jf10" "release/StrmCreator-${VERSION}/jf12"
+          cp bin/Release/net9.0/Jellyfin.Plugin.StrmCreator.dll  "release/StrmCreator-${VERSION}/jf10/Jellyfin.Plugin.StrmCreator-jf10.dll"
+          cp bin/Release/net10.0/Jellyfin.Plugin.StrmCreator.dll "release/StrmCreator-${VERSION}/jf12/Jellyfin.Plugin.StrmCreator-jf12.dll"
+          cp LICENSE NOTICE README.md how-to-install.md "release/StrmCreator-${VERSION}/"
+          cd release && zip -r "../StrmCreator-${VERSION}.zip" "StrmCreator-${VERSION}"
+
+      # Publica a release anexando os 3 arquivos (recria se já existir)
+      - name: Publicar release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          ZIP="StrmCreator-${VERSION}.zip"
+          JF10="release/StrmCreator-${VERSION}/jf10/Jellyfin.Plugin.StrmCreator-jf10.dll"
+          JF12="release/StrmCreator-${VERSION}/jf12/Jellyfin.Plugin.StrmCreator-jf12.dll"
+          gh release delete "${GITHUB_REF_NAME}" --yes --cleanup-tag || true
+          gh release create "${GITHUB_REF_NAME}" \
+            --title "Strm Creator ${GITHUB_REF_NAME}" \
+            --generate-notes \
+            "${ZIP}" "${JF10}" "${JF12}"

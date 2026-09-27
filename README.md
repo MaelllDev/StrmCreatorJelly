@@ -30,6 +30,8 @@ DLLs prontas na aba de [Releases](https://github.com/MaelllDev/StrmCreatorJelly/
 
 Tutorial de instalação passo a passo: **[how-to-install.md](how-to-install.md)**
 
+> As releases são geradas automaticamente pelo GitHub Actions a cada tag `v*` enviada ao repo. Para publicar manualmente, use `node make-release.js` (alternativa).
+
 ## Requisitos
 
 - **Jellyfin 12.x** ou **Jellyfin 10.11.x** — o projeto gera um build para cada linha (mesma fonte, DLLs separadas):
