@@ -1,23 +1,41 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
+    <!-- Build target selector (defaults to jf12).
+         jf12 -> Jellyfin 12, .NET 10, packages 12.1.0
+         jf10 -> Jellyfin 10.11, .NET 9, packages 10.11.11
+         Same source, two artifacts (one DLL per runtime, never both in one DLL):
+         dotnet build -p:JellyfinTarget=jf12
+         dotnet build -p:JellyfinTarget=jf10 -->
+    <JellyfinTarget Condition="'$(JellyfinTarget)' == ''">jf12</JellyfinTarget>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <RootNamespace>Jellyfin.Plugin.StrmCreator</RootNamespace>
     <AssemblyName>Jellyfin.Plugin.StrmCreator</AssemblyName>
-    <Version>0.1.0.0</Version>
-    <AssemblyVersion>0.1.0.0</AssemblyVersion>
-    <FileVersion>0.1.0.0</FileVersion>
+    <Version>0.2.0.0</Version>
+    <AssemblyVersion>0.2.0.0</AssemblyVersion>
+    <FileVersion>0.2.0.0</FileVersion>
     <LangVersion>latest</LangVersion>
   </PropertyGroup>
 
-  <!-- A versão dos pacotes precisa bater com a versão do Jellyfin Server.
-       Jellyfin 12.x -> Jellyfin.Controller/Model 12.1.0 (net10.0).
-       Para Jellyfin 10.11.x, troque para 10.11.11 e TargetFramework net9.0. -->
+  <!-- Jellyfin 12 / .NET 10 -->
+  <PropertyGroup Condition="'$(JellyfinTarget)' == 'jf12'">
+    <TargetFramework>net10.0</TargetFramework>
+    <JellyfinVersion>12.1.0</JellyfinVersion>
+  </PropertyGroup>
+
+  <!-- Jellyfin 10.11 / .NET 9. Pinned to 10.11.0-style lower bound so the
+       artifact loads across the whole 10.11.x line (newer host satisfies it). -->
+  <PropertyGroup Condition="'$(JellyfinTarget)' == 'jf10'">
+    <TargetFramework>net9.0</TargetFramework>
+    <JellyfinVersion>10.11.11</JellyfinVersion>
+  </PropertyGroup>
+
+  <!-- A versão dos pacotes precisa bater com a versão do Jellyfin Server,
+       senão o plugin aparece como "NotSupported". -->
   <ItemGroup>
-    <PackageReference Include="Jellyfin.Controller" Version="12.1.0" ExcludeAssets="runtime" />
-    <PackageReference Include="Jellyfin.Model" Version="12.1.0" ExcludeAssets="runtime" />
+    <PackageReference Include="Jellyfin.Controller" Version="$(JellyfinVersion)" ExcludeAssets="runtime" />
+    <PackageReference Include="Jellyfin.Model" Version="$(JellyfinVersion)" ExcludeAssets="runtime" />
   </ItemGroup>
 
   <ItemGroup>

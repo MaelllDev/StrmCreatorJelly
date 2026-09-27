@@ -23,27 +23,37 @@ Há uma **prévia em tempo real** dos nomes que serão criados. Arquivos já exi
 
 ## Requisitos
 
-- Jellyfin Server **12.x** (o plugin foi montado contra os pacotes `Jellyfin.Controller`/`Jellyfin.Model` **12.1.0**, .NET 10)
-- Para Jellyfin **10.11.x**: no `.csproj`, troque para `net9.0` e pacotes `10.11.11`
+- **Jellyfin 12.x** ou **Jellyfin 10.11.x** — o projeto gera um build para cada linha (mesma fonte, DLLs separadas):
+  - `jf12` → .NET 10 + pacotes `Jellyfin.Controller/Model` 12.1.0 (padrão)
+  - `jf10` → .NET 9 + pacotes `10.11.11`
 
 ## Build
 
+Os dois alvos de uma vez (requer .NET SDK 9 **e** 10, ou roll-forward habilitado):
+
 ```bash
-dotnet build -c Release
+bash build.sh
 ```
 
-A DLL fica em `bin/Release/net10.0/Jellyfin.Plugin.StrmCreator.dll`.
+Saída: `dist/jf10/Jellyfin.Plugin.StrmCreator.dll` e `dist/jf12/Jellyfin.Plugin.StrmCreator.dll`.
+
+Ou um alvo específico:
+
+```bash
+dotnet build -c Release -p:JellyfinTarget=jf12   # Jellyfin 12
+dotnet build -c Release -p:JellyfinTarget=jf10   # Jellyfin 10.11
+```
 
 ## Instalação manual
 
-1. Copie **apenas o `Jellyfin.Plugin.StrmCreator.dll`** para:
+Use a DLL que corresponde à **sua versão do servidor** (`dist/jf10/...` para 10.11.x, `dist/jf12/...` para 12.x) e copie **apenas o `Jellyfin.Plugin.StrmCreator.dll`** para:
 
    - **Windows**: `%ProgramData%\Jellyfin\Server\plugins\StrmCreator\` (ou `C:\Users\<vc>\AppData\Local\jellyfin\plugins\StrmCreator\`)
    - **Linux**: `/var/lib/jellyfin/plugins/StrmCreator/`
    - **Docker**: monte um volume apontando para `/config/plugins/StrmCreator/`
 
 2. Reinicie o Jellyfin.
-3. Vá em **Painel → Plugins** e confira se "Strm Creator" aparece ativo.
+3. Vá em **Painel → Plugins** e confira se "Strm Creator" aparece ativo (se aparecer "NotSupported", a versão da DLL não bate com a do servidor).
 
 > ⚠️ Recomendado: remova os demais arquivos (`Jellyfin.Model.dll`, `Jellyfin.Controller.dll` etc.) da pasta — só a DLL do plugin deve ficar lá.
 
