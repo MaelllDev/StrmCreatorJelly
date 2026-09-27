@@ -28,6 +28,21 @@ public class StrmCreatorController : ControllerBase
         _serverConfig = serverConfig;
     }
 
+    /// <summary>
+    /// Sem autenticação: o app standalone usa pra exibir a versão do plugin
+    /// no servidor (diagnóstico de atualização).
+    /// </summary>
+    [HttpGet("Ping")]
+    [AllowAnonymous]
+    public ActionResult<object> Ping()
+    {
+        return Ok(new
+        {
+            Name = "Strm Creator",
+            Version = GetType().Assembly.GetName().Version?.ToString()
+        });
+    }
+
     /// <summary>Lista as bibliotecas de mídia (CollectionFolder) do servidor.</summary>
     [HttpGet("Libraries")]
     public ActionResult<IReadOnlyList<StrmLibrary>> GetLibraries()

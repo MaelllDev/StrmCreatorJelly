@@ -129,16 +129,28 @@
     'use strict';
 
     var KEY_NAME = 'strmcreator_apikey';
-    var state = { libraries: [], crumbs: [], mode: 'movie' };
+    var state = { libraries: [], crumbs: [], mode: 'movie', authStyle: 'query' };
 
     function authHeaders() {
         var key = localStorage.getItem(KEY_NAME) || '';
-        return {
-            // Formato atual (Jellyfin 10.11+/12). O antigo X-Emby-Token
-            // nao e mais aceito para API keys.
-            'Authorization': 'MediaBrowser Token="' + key + '"',
-            'X-Emby-Token': key // fallback para servidores antigos
-        };
+        var h = {};
+        if (state.authStyle === 'mediabrowser') {
+            h['Authorization'] = 'MediaBrowser Token="' + key + '"';
+        } else if (state.authStyle === 'embytoken') {
+            h['X-Emby-Token'] = key;
+        } else {
+            // Query param funciona em todas as versões conhecidas
+            h['X-STRM-QUERY'] = '1'; // marcador (não é enviado)
+        }
+        return h;
+    }
+
+    function apiUrl(path) {
+        var url = '/StrmCreator/' + path;
+        if (state.authStyle === 'query') {
+            url += (url.indexOf('?') > -1 ? '&' : '?') + 'api_key=' + encodeURIComponent(localStorage.getItem(KEY_NAME) || '');
+        }
+        return url;
     }
 
     function f(obj, name) {
@@ -161,13 +173,41 @@
             opts.headers['Content-Type'] = 'application/json';
             opts.body = JSON.stringify(body);
         }
-        return fetch('/StrmCreator/' + path, opts).then(function (res) {
+        return fetch(apiUrl(path), opts).then(function (res) {
             if (!res.ok) {
                 return res.text().then(function (t) {
                     throw new Error('HTTP ' + res.status + (t ? ' — ' + t.slice(0, 180) : ''));
                 });
             }
             return res.json();
+        });
+    }
+
+    // Detecta automaticamente qual formato de autenticação o servidor aceita.
+    // Cada estilo é testado de verdade contra /StrmCreator/Libraries.
+    function detectAuthStyle(key) {
+        var styles = [
+            { name: 'mediabrowser', headers: { 'Authorization': 'MediaBrowser Token="' + key + '"' } },
+            { name: 'embytoken', headers: { 'X-Emby-Token': key } },
+            { name: 'query', headers: {} }
+        ];
+        var chain = Promise.reject();
+        var tried = [];
+        styles.forEach(function (s) {
+            chain = chain.catch(function () {
+                tried.push(s.name);
+                var url = '/StrmCreator/Libraries';
+                if (s.name === 'query') {
+                    url += '?api_key=' + encodeURIComponent(key);
+                }
+                return fetch(url, { headers: s.headers }).then(function (res) {
+                    if (!res.ok) throw new Error('HTTP ' + res.status + ' com ' + s.name);
+                    return res.json().then(function () { return s.name; });
+                });
+            });
+        });
+        return chain.catch(function (err) {
+            throw new Error('nenhum formato funcionou (testei: ' + tried.join(', ') + ') — último erro: ' + err.message);
         });
     }
 
@@ -186,14 +226,24 @@
     }
 
     function tryConnect(stored) {
-        api('GET', 'Libraries').then(function (libs) {
-            state.libraries = libs || [];
-            $('setup').classList.add('hidden');
-            $('app').classList.remove('hidden');
-            fillLibraries();
+        var key = localStorage.getItem(KEY_NAME) || '';
+
+        // Diagnóstico: versão do plugin no servidor (sem auth) + estilo de auth
+        fetch('/StrmCreator/Ping').then(function (r) { return r.json(); }).then(function (p) {
+            console.info('StrmCreator no servidor: v' + f(p, 'version'));
+        }).catch(function () { /* sem problema */ });
+
+        detectAuthStyle(key).then(function (style) {
+            state.authStyle = style;
+            return api('GET', 'Libraries').then(function (libs) {
+                state.libraries = libs || [];
+                $('setup').classList.add('hidden');
+                $('app').classList.remove('hidden');
+                fillLibraries();
+            });
         }).catch(function (err) {
             localStorage.removeItem(KEY_NAME);
-            showSetup(stored ? 'Chave salva não funciona (' + err.message + '). Gere uma nova e cole abaixo.' : '');
+            showSetup('A conexão falhou: ' + err.message + '. Verifique se o plugin está atualizado (Painel → Plugins) e se a chave está certa.');
         });
     }
 
