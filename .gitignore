@@ -1,6 +1,8 @@
 bin/
 obj/
 dist/
+release/
+StrmCreator-*.zip
 *.user
 .vs/
 .idea/
