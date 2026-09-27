@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Jellyfin.Plugin.StrmCreator</RootNamespace>
+    <AssemblyName>Jellyfin.Plugin.StrmCreator</AssemblyName>
+    <Version>0.1.0.0</Version>
+    <AssemblyVersion>0.1.0.0</AssemblyVersion>
+    <FileVersion>0.1.0.0</FileVersion>
+    <LangVersion>latest</LangVersion>
+  </PropertyGroup>
+
+  <!-- A versão dos pacotes precisa bater com a versão do Jellyfin Server.
+       Jellyfin 12.x -> Jellyfin.Controller/Model 12.1.0 (net10.0).
+       Para Jellyfin 10.11.x, troque para 10.11.11 e TargetFramework net9.0. -->
+  <ItemGroup>
+    <PackageReference Include="Jellyfin.Controller" Version="12.1.0" ExcludeAssets="runtime" />
+    <PackageReference Include="Jellyfin.Model" Version="12.1.0" ExcludeAssets="runtime" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="Web\strm-creator.js" />
+    <EmbeddedResource Include="Web\strm-creator.js" />
+    <None Remove="Configuration\configPage.html" />
+    <EmbeddedResource Include="Configuration\configPage.html" />
+  </ItemGroup>
+
+</Project>
