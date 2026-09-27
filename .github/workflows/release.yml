@@ -119,9 +119,11 @@ jobs:
             jq 'if type == "array" then . else [.] end' /tmp/current-manifest.json > /tmp/cm-arr.json && mv /tmp/cm-arr.json /tmp/current-manifest.json
           fi
 
-          # Historico antigo por targetAbi (sem a versao atual, se repetida)
-          OLD_12=$(jq -c '[ .[0].versions[]? | select(.targetAbi == "12.0.0.0" and .version != "'"${VERSION}"'") ]' /tmp/current-manifest.json)
-          OLD_10=$(jq -c '[ .[0].versions[]? | select(.targetAbi == "10.11.0.0" and .version != "'"${VERSION}"'") ]' /tmp/current-manifest.json)
+          # Historico antigo por targetAbi (sem a versao atual, se repetida).
+          # Mantem apenas entries no formato atual (com sourceUrl); versoes do
+          # formato legado (campo url) sao descartadas.
+          OLD_12=$(jq -c '[ .[0].versions[]? | select(.targetAbi == "12.0.0.0" and .version != "'"${VERSION}"'" and .sourceUrl != null) ]' /tmp/current-manifest.json)
+          OLD_10=$(jq -c '[ .[0].versions[]? | select(.targetAbi == "10.11.0.0" and .version != "'"${VERSION}"'" and .sourceUrl != null) ]' /tmp/current-manifest.json)
 
           jq -n \
             --argjson old12 "${OLD_12:-[]}" \
@@ -142,10 +144,11 @@ jobs:
               )
             }' > /tmp/package.json
 
-          # Envolve em array e grava os tres manifests
+          # Envolve em array e grava os tres manifests (o package e um OBJETO:
+          # indexa direto com ., nao com .[0])
           jq '[ . ]' /tmp/package.json > /tmp/manifest.json
-          jq '[ .[0] | .versions = [.versions[] | select(.targetAbi != "12.0.0.0")] ]' /tmp/package.json > /tmp/manifest-10.11.json
-          jq '[ .[0] | .versions = [.versions[] | select(.targetAbi != "10.11.0.0")] ]' /tmp/package.json > /tmp/manifest-12.json
+          jq '[ . | .versions = [.versions[] | select(.targetAbi != "12.0.0.0")] ]' /tmp/package.json > /tmp/manifest-10.11.json
+          jq '[ . | .versions = [.versions[] | select(.targetAbi != "10.11.0.0")] ]' /tmp/package.json > /tmp/manifest-12.json
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
