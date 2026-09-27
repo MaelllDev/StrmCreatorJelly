@@ -175,6 +175,7 @@ Se **não aparecer nada**: confira se a DLL está mesmo dentro da subpasta `Strm
 |---|---|---|
 | Plugin "NotSupported" | DLL errada pra versão do servidor | Troque `jf10` ↔ `jf12` (Passo 1) |
 | Plugin não aparece | DLL fora da subpasta / arquivos demais na pasta | Refaça o Passo 3 |
+| **Servidor não liga mais depois de instalar** | Plugin incompatível com a versão do servidor | Renomeie a pasta do plugin e reinicie: `mv /var/lib/jellyfin/plugins/StrmCreator /var/lib/jellyfin/plugins/StrmCreator.bak && sudo systemctl restart jellyfin` (Windows: renomeie a pasta pelo Explorer) |
 | Botão não aparece na página de detalhes | Não é admin, ou a página ficou em cache | Faça login como admin e dê Ctrl+F5 |
 | Erro ao criar arquivo | Permissão de escrita na pasta da biblioteca | No Docker/Linux, verifique o dono/permissão da pasta de mídia |
 | `.strm` criado mas não aparece | Falta o scan | Rode "Verificar todas as bibliotecas" |
