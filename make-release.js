@@ -17,13 +17,18 @@ function getToken() {
     return line ? line.slice('password='.length).trim() : '';
 }
 
-const NOTES = `Primeira release com DLLs prontas para download.
+const NOTES = `Rebuild das DLLs com a licença atualizada e metadados de atribuição embutidos.
+
+## Mudanças
+
+- Licença agora é **Apache 2.0 + arquivo NOTICE**: o código pode ser modificado e melhorado livremente, mas forks devem manter os créditos do autor original e o link do repositório oficial
+- Metadados de autor/repositório embutidos na DLL e visíveis na página do plugin no Painel
 
 ## Downloads
 
 | Arquivo | Para quem |
 |---|---|
-| \`StrmCreator-0.2.0.zip\` | Pacote com as duas DLLs (pastas \`jf10/\` e \`jf12/\`) |
+| \`StrmCreator-0.2.1.zip\` | Pacote com as duas DLLs (pastas \`jf10/\` e \`jf12/\`) |
 | \`Jellyfin.Plugin.StrmCreator-jf10.dll\` | Servidor Jellyfin **10.11.x** |
 | \`Jellyfin.Plugin.StrmCreator-jf12.dll\` | Servidor Jellyfin **12.x** |
 
@@ -62,8 +67,8 @@ async function main() {
         method: 'POST',
         headers: { ...headers, 'Content-Type': 'application/json' },
         body: JSON.stringify({
-            tag_name: 'v0.2.0',
-            name: 'Strm Creator v0.2.0',
+            tag_name: 'v0.2.1',
+            name: 'Strm Creator v0.2.1',
             body: NOTES,
             draft: false,
             prerelease: false
@@ -77,7 +82,7 @@ async function main() {
     const uploadBase = `https://uploads.github.com/repos/${REPO}/releases/${created.id}/assets`;
 
     for (const [file, uploadName] of [
-        ['StrmCreator-0.2.0.zip', 'StrmCreator-0.2.0.zip'],
+        ['StrmCreator-0.2.1.zip', 'StrmCreator-0.2.1.zip'],
         ['dist/jf10/Jellyfin.Plugin.StrmCreator.dll', 'Jellyfin.Plugin.StrmCreator-jf10.dll'],
         ['dist/jf12/Jellyfin.Plugin.StrmCreator.dll', 'Jellyfin.Plugin.StrmCreator-jf12.dll']
     ]) {
@@ -93,7 +98,7 @@ async function main() {
         if (!upRes.ok) process.exit(1);
     }
 
-    console.log(`==> Release publicada: https://github.com/${REPO}/releases/tag/v0.2.0`);
+    console.log(`==> Release publicada: https://github.com/${REPO}/releases/tag/v0.2.1`);
 }
 
 main().catch(err => {
