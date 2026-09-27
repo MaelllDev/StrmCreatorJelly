@@ -24,7 +24,7 @@ public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
     public override string Name => "Strm Creator";
 
     public override string Description =>
-        "Adiciona um botão na página de detalhes para criar arquivos .strm: escolha a biblioteca, navegue pelas pastas, crie uma pasta nova, nomeie o arquivo e cole o link de stream.\n\nRepositório oficial: https://github.com/MaelllDev/StrmCreatorJelly";
+        "Cria arquivos .strm direto do Painel: escolha a biblioteca, navegue pelas pastas, crie uma pasta nova, nomeie o arquivo (modo série com S01E01 e lote de episódios) e cole o link de stream.\n\nRepositório oficial: https://github.com/MaelllDev/StrmCreatorJelly";
 
     public override Guid Id => Guid.Parse("e1f2a3b4-c5d6-4e7f-8a9b-0c1d2e3f4a5b");
 
