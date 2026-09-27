@@ -46,6 +46,9 @@ jobs:
           cp plugins/icon.png "release/StrmCreator-${VERSION}/jf10/icon.png"
           cp plugins/icon.png "release/StrmCreator-${VERSION}/jf12/icon.png"
           cp LICENSE NOTICE README.md how-to-install.md "release/StrmCreator-${VERSION}/"
+          # DLLs soltas com nomes distintos (a release nao aceita assets duplicados)
+          cp "release/StrmCreator-${VERSION}/jf10/Jellyfin.Plugin.StrmCreator.dll" "StrmCreator_${VERSION}_jf10.dll"
+          cp "release/StrmCreator-${VERSION}/jf12/Jellyfin.Plugin.StrmCreator.dll" "StrmCreator_${VERSION}_jf12.dll"
           # zips instalaveis pelo catalogo (conteudo na raiz do zip)
           (cd "release/StrmCreator-${VERSION}/jf10" && zip -r "${GITHUB_WORKSPACE}/StrmCreator_${VERSION}_jf10.zip" .)
           (cd "release/StrmCreator-${VERSION}/jf12" && zip -r "${GITHUB_WORKSPACE}/StrmCreator_${VERSION}_jf12.zip" .)
@@ -61,12 +64,13 @@ jobs:
           gh release delete "${GITHUB_REF_NAME}" --yes --cleanup-tag || true
           gh release create "${GITHUB_REF_NAME}" \
             --title "Strm Creator ${GITHUB_REF_NAME}" \
-            --generate-notes \
+            --generate-notes
+          gh release upload "${GITHUB_REF_NAME}" --clobber \
             "StrmCreator-${VERSION}.zip" \
             "StrmCreator_${VERSION}_jf10.zip" \
             "StrmCreator_${VERSION}_jf12.zip" \
-            "release/StrmCreator-${VERSION}/jf10/Jellyfin.Plugin.StrmCreator.dll" \
-            "release/StrmCreator-${VERSION}/jf12/Jellyfin.Plugin.StrmCreator.dll"
+            "StrmCreator_${VERSION}_jf10.dll" \
+            "StrmCreator_${VERSION}_jf12.dll"
 
       # Gera/atualiza o catalogo (manifests) no branch "catalog".
       # FORMATO ATUAL (validado contra o catalogo oficial e o do JavaScript
