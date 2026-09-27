@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/MaelllDev/StrmCreatorJelly/main/plugins/icon.png",
     "versions": [
       {
+        "version": "0.4.1.0",
+        "changelog": "Release v0.4.1 ",
+        "targetAbi": "12.0.0.0",
+        "sourceUrl": "https://github.com/MaelllDev/StrmCreatorJelly/releases/download/v0.4.1/StrmCreator_0.4.1.0_jf12.zip",
+        "checksum": "0826d0e935de50ee21d9d801721f8ef8",
+        "timestamp": "2026-09-27T23:41:51Z"
+      },
+      {
         "version": "0.4.0.0",
         "changelog": "Release v0.4.0 ",
         "targetAbi": "12.0.0.0",
@@ -55,6 +63,14 @@
         "sourceUrl": "https://github.com/MaelllDev/StrmCreatorJelly/releases/download/v0.2.5/StrmCreator_0.2.5.0_jf12.zip",
         "checksum": "1b99110a2ee28fa1ed40a44574a6bd7f",
         "timestamp": "2026-09-27T22:36:25Z"
+      },
+      {
+        "version": "0.4.1.0",
+        "changelog": "Release v0.4.1 ",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/MaelllDev/StrmCreatorJelly/releases/download/v0.4.1/StrmCreator_0.4.1.0_jf10.zip",
+        "checksum": "fb16be07558d293972d1469291331706",
+        "timestamp": "2026-09-27T23:41:51Z"
       },
       {
         "version": "0.4.0.0",
