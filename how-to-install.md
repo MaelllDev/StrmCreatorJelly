@@ -2,6 +2,24 @@
 
 Tutorial passo a passo, do zero até o botão aparecendo no Jellyfin.
 
+> Tem **duas formas** de instalar:
+> - **Pelo Catálogo** (recomendado, igual aos outros plugins — com foto e atualização automática) → Passo 1
+> - **Manual** (copiando a DLL) → Passo 2 em diante
+
+---
+
+## Instalação pelo Catálogo (recomendada)
+
+1. Abra o Jellyfin → **Painel** → **Plugins** → **Catálogo** → engrenagem ⚙️ (canto superior direito) → **Adicionar repositório**
+2. Preencha:
+   - **Nome**: `StrmCreator`
+   - **URL do manifest**:
+     - Servidor **12.x**: `https://raw.githubusercontent.com/MaelllDev/StrmCreatorJelly/catalog/manifest-12.json`
+     - Servidor **10.11.x**: `https://raw.githubusercontent.com/MaelllDev/StrmCreatorJelly/catalog/manifest-10.11.json`
+3. **Salvar** → volte ao **Catálogo** → procure **"Strm Creator"** → **Instalar**
+4. Reinicie o Jellyfin
+5. Pronto: plugin com ícone, metadados e **atualização automática** — igual ao AniDB e aos outros do catálogo
+
 ---
 
 ## Passo 1 — Descubra a versão do seu Jellyfin

@@ -27,7 +27,18 @@ Há uma **prévia em tempo real** dos nomes que serão criados. Arquivos já exi
 
 ## Download
 
-DLLs prontas na aba de [Releases](https://github.com/MaelllDev/StrmCreatorJelly/releases/latest):
+**Pelo Catálogo do Jellyfin** (recomendado — com ícone e atualização automática):
+
+Painel → Plugins → Catálogo → ⚙️ → adicionar repositório:
+
+| Seu servidor | URL do manifest |
+|---|---|
+| Jellyfin **12.x** | `https://raw.githubusercontent.com/MaelllDev/StrmCreatorJelly/catalog/manifest-12.json` |
+| Jellyfin **10.11.x** | `https://raw.githubusercontent.com/MaelllDev/StrmCreatorJelly/catalog/manifest-10.11.json` |
+
+Depois é só procurar **"Strm Creator"** no Catálogo e instalar.
+
+**Ou baixando a DLL** da aba de [Releases](https://github.com/MaelllDev/StrmCreatorJelly/releases/latest):
 
 - `Jellyfin.Plugin.StrmCreator-jf10.dll` → Jellyfin **10.11.x**
 - `Jellyfin.Plugin.StrmCreator-jf12.dll` → Jellyfin **12.x**

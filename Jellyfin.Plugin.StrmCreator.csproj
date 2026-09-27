@@ -12,15 +12,16 @@
     <Nullable>enable</Nullable>
     <RootNamespace>Jellyfin.Plugin.StrmCreator</RootNamespace>
     <AssemblyName>Jellyfin.Plugin.StrmCreator</AssemblyName>
-    <Version>0.2.2.0</Version>
-    <AssemblyVersion>0.2.2.0</AssemblyVersion>
-    <FileVersion>0.2.2.0</FileVersion>
+    <Version>0.2.4.0</Version>
+    <AssemblyVersion>0.2.4.0</AssemblyVersion>
+    <FileVersion>0.2.4.0</FileVersion>
     <LangVersion>latest</LangVersion>
     <Authors>MaelllDev</Authors>
     <Copyright>Copyright 2026 MaelllDev</Copyright>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <RepositoryUrl>https://github.com/MaelllDev/StrmCreatorJelly</RepositoryUrl>
     <PackageProjectUrl>https://github.com/MaelllDev/StrmCreatorJelly</PackageProjectUrl>
+    <PackageIcon>icon.png</PackageIcon>
   </PropertyGroup>
 
   <!-- Jellyfin 12 / .NET 10. Pinned to 12.0.0 (lower bound) so the same DLL
@@ -49,6 +50,7 @@
     <EmbeddedResource Include="Web\strm-creator.js" />
     <None Remove="Configuration\configPage.html" />
     <EmbeddedResource Include="Configuration\configPage.html" />
+    <None Include="plugins\icon.png" Pack="true" PackagePath="\" />
   </ItemGroup>
 
 </Project>
