@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/MaelllDev/StrmCreatorJelly/main/plugins/icon.png",
     "versions": [
       {
+        "version": "0.4.5.0",
+        "changelog": "Release v0.4.5 ",
+        "targetAbi": "12.0.0.0",
+        "sourceUrl": "https://github.com/MaelllDev/StrmCreatorJelly/releases/download/v0.4.5/StrmCreator_0.4.5.0_jf12.zip",
+        "checksum": "3786790ae5062c940415da54cacee38a",
+        "timestamp": "2026-09-28T00:28:45Z"
+      },
+      {
         "version": "0.4.4.0",
         "changelog": "Release v0.4.4 ",
         "targetAbi": "12.0.0.0",
