@@ -28,6 +28,8 @@ public class CreateStrmRequest
 
 public class EpisodeStream
 {
+    /// <summary>Temporada específica deste episódio; 0 usa a da requisição.</summary>
+    public int Season { get; set; }
     public int Episode { get; set; }
     public string StreamUrl { get; set; } = string.Empty;
 }

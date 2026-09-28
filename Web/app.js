@@ -213,7 +213,59 @@
         });
     }
 
-    // ---------- modo / prévia ----------
+    // ---------- modo / episódios / prévia ----------
+
+    var nextEp = 1; // próximo número de episódio ao adicionar linha
+
+    function addEpRow(season, ep, url) {
+        var rows = $('epRows');
+        var row = document.createElement('div');
+        row.className = 'ep-row';
+        row.style.cssText = 'display:flex;gap:6px;align-items:center;margin-bottom:6px;';
+
+        var s = document.createElement('input');
+        s.type = 'number'; s.min = '1'; s.value = season || 1; s.title = 'Temporada';
+        s.style.cssText = 'width:76px;flex:0 0 auto;';
+        s.addEventListener('input', updatePreview);
+
+        var e = document.createElement('input');
+        e.type = 'number'; e.min = '1'; e.value = ep || 1; e.title = 'Episódio';
+        e.style.cssText = 'width:76px;flex:0 0 auto;';
+        e.addEventListener('input', updatePreview);
+
+        var u = document.createElement('input');
+        u.type = 'text'; u.placeholder = 'https://... (link do stream)'; u.value = url || '';
+        u.style.flex = '1';
+        u.addEventListener('input', updatePreview);
+
+        var del = document.createElement('button');
+        del.type = 'button'; del.className = 'ghost'; del.textContent = '✕';
+        del.style.cssText = 'flex:0 0 auto;padding:10px 12px;';
+        del.title = 'Remover este episódio';
+        del.addEventListener('click', function () {
+            row.remove();
+            if (!$('epRows').children.length) addEpRow();
+            updatePreview();
+        });
+
+        row.appendChild(s); row.appendChild(e); row.appendChild(u); row.appendChild(del);
+        rows.appendChild(row);
+    }
+
+    function collectEpisodes() {
+        var out = [];
+        var rows = $('epRows').children;
+        for (var i = 0; i < rows.length; i++) {
+            var inputs = rows[i].querySelectorAll('input');
+            var season = parseInt(inputs[0].value, 10) || 0;
+            var ep = parseInt(inputs[1].value, 10) || 0;
+            var url = inputs[2].value.trim();
+            if (ep > 0 && url) {
+                out.push({ Episode: ep, Season: season, StreamUrl: url });
+            }
+        }
+        return out;
+    }
 
     function setMode(mode) {
         state.mode = mode;
@@ -221,7 +273,11 @@
         $('modeMovie').className = isSeries ? '' : 'on';
         $('modeSeries').className = isSeries ? 'on' : '';
         $('seriesRow').classList.toggle('hidden', !isSeries);
-        $('linksLabel').textContent = isSeries ? 'Links de stream (um por linha = um episódio)' : 'Link de stream';
+        $('movieLinks').classList.toggle('hidden', isSeries);
+        if (isSeries && !$('epRows').children.length) {
+            addEpRow(1, 1);
+            nextEp = 2;
+        }
         updatePreview();
     }
 
@@ -233,12 +289,13 @@
         var p = $('preview');
         if (state.mode !== 'series') { p.style.display = 'none'; return; }
         var series = $('name').value.trim() || 'Serie';
-        var season = parseInt($('season').value, 10) || 1;
-        var first = parseInt($('firstEp').value, 10) || 1;
-        var lines = linksList();
-        p.textContent = lines.length
-            ? lines.map(function (_, i) { return series.replace(/ /g, '-') + ' S' + pad(season) + 'E' + pad(first + i) + '.strm'; }).join('\n')
-            : 'Cole os links (um por linha) para ver a prévia dos arquivos.';
+        var eps = collectEpisodes();
+        p.textContent = eps.length
+            ? eps.map(function (ep) {
+                var s = ep.Season > 0 ? ep.Season : 1;
+                return series.replace(/ /g, '-') + ' S' + pad(s) + 'E' + pad(ep.Episode) + '.strm';
+            }).join('\n')
+            : 'Preencha temporada, episódio e link (ou adicione linhas) para ver a prévia.';
         p.style.display = 'block';
     }
 
@@ -251,15 +308,14 @@
         $('scanBtn').classList.add('hidden');
 
         if (state.mode === 'series') {
-            var season = parseInt($('season').value, 10) || 1;
-            var first = parseInt($('firstEp').value, 10) || 1;
-            if (!name || !lines.length) { setStatus('Preencha o nome da série e ao menos um link.', 'err'); return; }
-            setStatus('Criando ' + lines.length + ' episódio(s)...', 'busy');
+            var eps = collectEpisodes();
+            if (!name || !eps.length) { setStatus('Preencha o nome da série e ao menos um episódio (temporada, número e link).', 'err'); return; }
+            setStatus('Criando ' + eps.length + ' episódio(s)...', 'busy');
             api('POST', 'Episodes', {
                 FolderPath: currentPath(),
                 SeriesName: name,
-                Season: season,
-                Episodes: lines.map(function (line, i) { return { Episode: first + i, StreamUrl: line }; })
+                Season: 1,
+                Episodes: eps
             }).then(function (r) {
                 setStatus('✔ ' + f(r, 'message') + ' Agora escaneie as bibliotecas.', f(r, 'failed') ? 'err' : 'ok');
                 if (f(r, 'created') > 0) $('scanBtn').classList.remove('hidden');
@@ -321,7 +377,20 @@
 
     $('modeMovie').addEventListener('click', function () { setMode('movie'); });
     $('modeSeries').addEventListener('click', function () { setMode('series'); });
-    ['name', 'season', 'firstEp', 'links'].forEach(function (id) {
+    $('addEpBtn').addEventListener('click', function () {
+        // continua a contagem do último episódio da última temporada usada
+        var rows = $('epRows').children;
+        var lastS = 1, lastE = 0;
+        if (rows.length) {
+            var inputs = rows[rows.length - 1].querySelectorAll('input');
+            lastS = parseInt(inputs[0].value, 10) || 1;
+            lastE = parseInt(inputs[1].value, 10) || 0;
+        }
+        addEpRow(lastS, lastE + 1);
+        nextEp = lastE + 2;
+        updatePreview();
+    });
+    ['name', 'links'].forEach(function (id) {
         $(id).addEventListener('input', updatePreview);
     });
     $('createBtn').addEventListener('click', create);

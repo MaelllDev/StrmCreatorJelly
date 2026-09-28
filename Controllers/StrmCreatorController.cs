@@ -177,15 +177,24 @@ public class StrmCreatorController : ControllerBase
         var result = new CreateEpisodesResult();
         foreach (var ep in request.Episodes)
         {
+            // temporada por episódio (0 = usa a da requisição)
+            var season = ep.Season > 0 ? ep.Season : request.Season;
+            if (season < 0)
+            {
+                result.Messages.Add($"Episódio {ep.Episode}: temporada inválida — ignorado.");
+                result.Failed++;
+                continue;
+            }
+
             if (ep.Episode < 1 || string.IsNullOrWhiteSpace(ep.StreamUrl))
             {
-                result.Messages.Add($"Episódio {ep.Episode}: número inválido ou link vazio — ignorado.");
+                result.Messages.Add($"Episódio S{season:00}E{ep.Episode:00}: número inválido ou link vazio — ignorado.");
                 result.Failed++;
                 continue;
             }
 
             // "Serie X S01E02" -> "Serie-X-S01E02" (SanitizeName troca espaços por "-")
-            var fileName = $"{series} S{request.Season:00}E{ep.Episode:00}.strm";
+            var fileName = $"{series} S{season:00}E{ep.Episode:00}.strm";
             var filePath = Path.Combine(folder, fileName);
 
             if (System.IO.File.Exists(filePath))

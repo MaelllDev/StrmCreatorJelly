@@ -98,15 +98,23 @@
                 <button id="modeMovie" class="on">🎬 Filme</button>
                 <button id="modeSeries">📺 Série</button>
             </div>
-            <div id="seriesRow" class="row hidden" style="margin-bottom:12px;">
-                <div><label>Temporada</label><input type="number" id="season" min="1" value="1"></div>
-                <div><label>1º episódio</label><input type="number" id="firstEp" min="1" value="1"></div>
-            </div>
             <label>Nome do filme/série <span style="opacity:.5;">(espaços viram "-")</span></label>
             <input type="text" id="name" placeholder="Ex.: Meu-Filme">
-            <label id="linksLabel">Link de stream</label>
-            <textarea id="links" rows="4" placeholder="https://..."></textarea>
-            <div class="muted" id="linksHint" style="padding:6px 0 0;">No modo Série, um link por linha = um episódio (S01E01, S01E02, ...).</div>
+
+            <!-- MODO SÉRIE: linhas de episódios (temp · ep · link) -->
+            <div id="seriesRow" class="hidden" style="margin-top:14px;">
+                <label>Episódios <span style="opacity:.5;">(temporada · episódio · link)</span></label>
+                <div id="epRows"></div>
+                <button type="button" id="addEpBtn" class="ghost" style="margin-top:8px;width:100%;">➕ Adicionar episódio</button>
+            </div>
+
+            <!-- MODO FILME: um único link -->
+            <div id="movieLinks" style="margin-top:14px;">
+                <label id="linksLabel">Link de stream</label>
+                <textarea id="links" rows="4" placeholder="https://..."></textarea>
+                <div class="muted" id="linksHint" style="padding:6px 0 0;">Cole o link do stream.</div>
+            </div>
+
             <div class="preview" id="preview"></div>
         </div>
 
