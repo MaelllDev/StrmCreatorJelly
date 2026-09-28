@@ -17,8 +17,21 @@ public class AppController : ControllerBase
     [AllowAnonymous]
     public IActionResult GetApp()
     {
+        return ServeEmbedded("Jellyfin.Plugin.StrmCreator.Web.app.html", "text/html");
+    }
+
+    /// <summary>JavaScript do app (arquivo externo: CSP bloqueia scripts inline).</summary>
+    [HttpGet("app.js")]
+    [AllowAnonymous]
+    public IActionResult GetAppJs()
+    {
+        return ServeEmbedded("Jellyfin.Plugin.StrmCreator.Web.app.js", "application/javascript");
+    }
+
+    private IActionResult ServeEmbedded(string resourceName, string contentType)
+    {
         var assembly = typeof(AppController).Assembly;
-        using var stream = assembly.GetManifestResourceStream("Jellyfin.Plugin.StrmCreator.Web.app.html");
+        using var stream = assembly.GetManifestResourceStream(resourceName);
         if (stream is null)
         {
             return NotFound();
@@ -28,6 +41,6 @@ public class AppController : ControllerBase
         var content = reader.ReadToEnd();
 
         Response.Headers.CacheControl = "no-cache";
-        return Content(content, "text/html");
+        return Content(content, contentType);
     }
 }
